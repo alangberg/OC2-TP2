@@ -1,0 +1,26 @@
+To Do's:
+
+(ASM)
+
+- Ciclo para recorrer toda la matriz de pixels
+- Funcion: pixel* matriz(fila, col, '#filas', '#columnas', 'tamaño elemento') // se para -->DIRECTAMENTE<-- en el pixel (fila, col). 
+- Funcion: void swap(matriz*, pixel*, pixel*) // Swapea los valores.  Matriz* puede q no sea necesario
+- Funcion: void elFiltroQueSea(pixel*) // agarra al pixel y le aplica la funcion/filtro q sea, hay que hacer una funcion por filtro (salvo el CropFlip q es distinto)
+
+Estructura del Codigo (+/-) :
+    
+      Ciclo_Filas {
+          Ciclo_Columnas {
+              AplicoFiltro(Matriz(f, c))
+          }
+      }
+      
+  En CropFlip:
+    Ciclo_Filas {
+        Ciclo_Columnas {
+            pixel_Iterador_1 = Matriz( 'esquina sup-izq de la parte a cortar' + c)
+            pixel_Iterador_2 = Matriz( 'esquina sup-der de la parte a cortar' - c)
+            
+            Swap(matriz*, pixel_Iterador_1, pixel_Iterador_2)
+        }
+    }
