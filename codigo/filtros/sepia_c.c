@@ -22,6 +22,17 @@ void sepia_c    (
             *p_d = *p_s;
         }
     }	//COMPLETAR
+    for (int k = 0; k < filas; k++){
+        for (int n = 0; n < cols; n++){
+            unsigned char suma = 0;
+            suma += dst_matrix[k][n*4+0];
+            suma += dst_matrix[k][n*4+1];
+            suma += dst_matrix[k][n*4+2];
+            dst_matrix[k][n*4+0] = suma*0.5;
+            dst_matrix[k][n*4+1] = suma*0.3;
+            dst_matrix[k][n*4+2] = suma*0.2;
+        }
+    }
 }
 
 
