@@ -8,6 +8,8 @@ global cropflip_asm
  %define OFFSET_Y [rbp + 40]
  %define SRC rdi
  %define DST rsi
+ %define COLS rdx
+ %define FILAS rcx
 
 
 
@@ -31,20 +33,21 @@ cropflip_asm:
 	sub rsp, 8
 
 	xor i, i	; r12 = i + Offset_y = Offset_y
-	xor j, j	; r13 = j + Offset_x = Offset_x
 
 
 	mov r14, SRC
 	mov r15, DST
 
 	.ciclo_filas:
+		xor j, j	; r13 = j + Offset_x = Offset_x
 		.ciclo_columnas:
+
+			mov r10, FILAS
 
 			mov rdi, r15
 			mov rsi, i
 			mov rdx, j
-			add rdx, OFFSET_X
-			mov rcx, TAM_Y
+			mov rcx, TAM_X
 			call matriz
 
 			mov rbx, rax
@@ -56,7 +59,30 @@ cropflip_asm:
 			dec rsi
 			mov rdx, j
 			add rdx, OFFSET_X
-			mov rcx, TAM_Y
+			mov rcx, r10
+			call matriz
+
+			mov rdi, rax
+			mov rsi, rbx
+
+			call copiarPixeles
+
+			mov rdi, r15
+			mov rsi, TAM_Y
+			dec rsi
+			sub rsi, i			
+			mov rdx, j
+			mov rcx, TAM_X
+			call matriz
+
+			mov rbx, rax
+
+			mov rdi, r14
+			mov rsi, OFFSET_Y
+			add rsi, i
+			mov rdx, j
+			add rdx, OFFSET_X
+			mov rcx, r10
 			call matriz
 
 			mov rdi, rax
@@ -91,8 +117,8 @@ copiarPixeles:
 	xor r12, r12
 	xor r13, r13
 	.ciclo:
-		lea r12b, [rdi + r13]
-		lea [rsi + r13], r12b
+		mov r12b, [rdi + r13]
+		mov [rsi + r13], r12b
 
 		inc r13
 		cmp r13, 4
@@ -109,17 +135,17 @@ multiplicar:
 	mov rbp, rsp
 	push r12
 
+	xor rax, rax
 	cmp rsi, 0
 	je .fin
 
 	cmp rdi, 0
 	je .fin
 
-	mov r12, 1
-	mov rax, rdi
+	xor r12, r12
 
-	.ciclo
-		add rax, rax		
+	.ciclo:
+		add rax, rdi		
 		inc r12
 		cmp r12, rsi
 	jne .ciclo
@@ -140,9 +166,10 @@ matriz:
 	mov rdi, rcx
 
 	call multiplicar
+
 	add rax, rdx
 
-	lea rax, [rdi + rax*4]
+	lea rax, [r12 + rax*4]
 
 	add rsp, 8
 	pop r12
