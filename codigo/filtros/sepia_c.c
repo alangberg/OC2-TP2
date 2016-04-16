@@ -18,7 +18,7 @@ void sepia_c    (
 
     for (int i = 0; i < filas; i++){
         for (int j = 0; j < cols; j++){
-            float suma = dst_matrix[i][j*4+0] + dst_matrix[i][j*4+1] + dst_matrix[i][j*4+2];
+            float suma = src_matrix[i][j*4+0] + src_matrix[i][j*4+1] + src_matrix[i][j*4+2];
             
             dst_matrix[i][j*4+2] = (unsigned char) min(255.0f, suma * 0.5f);
             dst_matrix[i][j*4+1] = (unsigned char) min(255.0f, suma * 0.3f);
