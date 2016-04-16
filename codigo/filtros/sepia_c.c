@@ -1,6 +1,9 @@
-
 #include "../tp2.h"
 
+float min(float a, float b) {
+    if (a < b) return a;
+    else return b;
+}
 
 void sepia_c    (
     unsigned char *src,
@@ -13,27 +16,15 @@ void sepia_c    (
     unsigned char (*src_matrix)[src_row_size] = (unsigned char (*)[src_row_size]) src;
     unsigned char (*dst_matrix)[dst_row_size] = (unsigned char (*)[dst_row_size]) dst;
 
-    for (int i = 0; i < filas; i++)
-    {
-        for (int j = 0; j < cols; j++)
-        {
-            bgra_t *p_d = (bgra_t*) &dst_matrix[i][j * 4];
-            bgra_t *p_s = (bgra_t*) &src_matrix[i][j * 4];
-            *p_d = *p_s;
-        }
-    }	//COMPLETAR
-    for (int k = 0; k < filas; k++){
-        for (int n = 0; n < cols; n++){
-            unsigned char suma = 0;
-            suma += dst_matrix[k][n*4+0];
-            suma += dst_matrix[k][n*4+1];
-            suma += dst_matrix[k][n*4+2];
-            dst_matrix[k][n*4+0] = suma*0.5;
-            dst_matrix[k][n*4+1] = suma*0.3;
-            dst_matrix[k][n*4+2] = suma*0.2;
+    for (int i = 0; i < filas; i++){
+        for (int j = 0; j < cols; j++){
+            float suma = dst_matrix[i][j*4+0] + dst_matrix[i][j*4+1] + dst_matrix[i][j*4+2];
+            
+            dst_matrix[i][j*4+2] = (unsigned char) min(255.0f, suma * 0.5f);
+            dst_matrix[i][j*4+1] = (unsigned char) min(255.0f, suma * 0.3f);
+            dst_matrix[i][j*4+0] = (unsigned char) min(255.0f, suma * 0.2f);
         }
     }
 }
-
 
 
