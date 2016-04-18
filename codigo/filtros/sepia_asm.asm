@@ -1,6 +1,5 @@
 section .rodata
-	val0503: dq 0.5, 0.3
-	val02: dq 0.2
+	val050302: dd 0.2, 0.3, 0.5
 
 DEFAULT REL
 
@@ -45,7 +44,7 @@ sepia_asm:
 
 			call aplicarSepia
 
-			inc j
+			add j, 4
 			cmp j, r14
 		jne .ciclo_columnas
 
@@ -75,33 +74,23 @@ aplicarSepia:
 	pxor xmm1, xmm1				; pongo todos estos registros en 0
 	pxor xmm7, xmm7
 
-	movd xmm0, [rdi]			; pongo en xmm0 los 32b del pixel (RGBA)
+	movdqa xmm0, [rdi]			; pongo en xmm0 los 128b de los 4 pixeles
 
-	punpcklbw xmm0, xmm7		; separo los numeros asi si alguno se pasa de 255 no me pisa el siguiente
+	movdqu xmm8, xmm0
 
-								; aca arranco la sumatoria de R + G + B. Lo que me importa es el 1er numero en xmm0, ahi va a estar el resultado
-	movups xmm1, xmm0			; copio en xmm0 en xmm1 R | G | B | A
+	punpcklbw xmm0, xmm7		; xmm0 = 0 | a7 | . . . | 0 | a0
+	punpckhbw xmm8, xmm7		; xmm1 = 0 | a15 | . . . | 0 | a8
 
-	psrldq xmm1, 2				; shifteo xmm1, G | B | A
+	call sepiaEnDosPixeles
+	movups xmm9, xmm0
 
-	addps xmm0, xmm1			; xmm0 R + G | G | B | A
-	psrldq xmm1, 2				; shifteo xmm1, B | A
-	addps xmm0, xmm1			; xmm0 R + G + B | G | B | A
+	movups xmm0, xmm8
+	call sepiaEnDosPixeles
+	pslldq xmm0, 3
 
-	movups xmm1, xmm0			; copio el resultado en xmm1
-	mov r12, 0xFFFF
-	movq xmm7, r12
-	pand xmm1, xmm7				; y pongo todo el resto del registro en 0
+	addpd xmm0, xmm9
 
-	movups xmm0, xmm1
-	pslldq xmm1, 2
-	paddw xmm0, xmm1
-	pslldq xmm1, 2
-	paddw xmm0, xmm1			; lo que hice aca es hacer que xmm0 sea SUMA | SUMA | SUMA
-
-	movdqu xmm7, [val0503]		; esto es para que xmm7 sea 0.5 | 0.3 (lo saque de la ultima clase, creo q entran dos numeros FP por registro)
-
-								; hasta aca llego mi amor
+	movdqa [rdi], xmm0
 
 	pop r12
 	pop r13
@@ -153,4 +142,74 @@ matriz:
 	add rsp, 8
 	pop r12
 	pop rbp
+ret
+
+
+sepiaEnDosPixeles:				; asumo que en xmm0 tengo los dos pixeles desenpaquetados
+								; aca arranco la sumatoria de R + G + B. Lo que me importa es el 1er numero en xmm0, ahi va a estar el resultado
+	movups xmm1, xmm0			; copio en xmm0 en xmm1 R | G | B | A
+
+	psrldq xmm1, 2				; shifteo xmm1, G | B | A
+
+	addpd xmm0, xmm1			; xmm0 R + G | G | B | A
+	psrldq xmm1, 2				; shifteo xmm1, B | A
+	addpd xmm0, xmm1			; xmm0 R + G + B | G | B | A
+
+	movups xmm1, xmm0			; copio el resultado en xmm1
+	mov r12, 0xFFFF000000000000FFFF
+	movq xmm7, r12
+	pand xmm1, xmm7				; y pongo todo el resto del registro en 0
+
+	movups xmm0, xmm1
+	pslldq xmm1, 2
+	paddw xmm0, xmm1
+	pslldq xmm1, 2
+	paddw xmm0, xmm1			; lo que hice aca es hacer que xmm0 sea SUMA | SUMA | SUMA | .
+
+	pxor xmm7, xmm7
+	movupd xmm7, [val050302]		; esto es para que xmm7 sea 0.5 | 0.3 | 0.2 (lo saque de la ultima clase, creo q entran dos numeros FP por registro)
+	pxor xmm1, xmm1
+
+	movups xmm3, xmm0
+	psrldq xmm3, 3
+
+
+	punpcklwd xmm0, xmm1
+	pxor xmm2, xmm2
+	
+	CVTDQ2PS xmm2, xmm0
+	mulps xmm2, xmm7	
+
+	pxor xmm7, xmm7
+	CVTPS2DQ xmm7, xmm2
+
+	packusdw xmm7, xmm2
+	packuswb xmm7, xmm2
+
+	movups xmm0, xmm7			; aca tengo el valor final de todo
+
+
+	pxor xmm1, xmm1
+	pxor xmm7, xmm7
+	movupd xmm7, [val050302]
+
+	punpcklwd xmm3, xmm1
+	pxor xmm2, xmm2
+	
+	CVTDQ2PS xmm2, xmm3
+	mulps xmm2, xmm7	
+
+	pxor xmm7, xmm7
+	CVTPS2DQ xmm7, xmm2
+
+	packusdw xmm7, xmm2
+	packuswb xmm7, xmm2
+
+	movups xmm1, xmm7
+
+	packuswb xmm0, xmm1
+
+	mov r12, 0xFFFFFFFFFFFFFFFF		; me guardo los primeros 8 numeros (bytes) el resto esta en 0
+	movq xmm1, r12
+	pand xmm0, xmm1
 ret
