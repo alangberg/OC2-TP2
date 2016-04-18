@@ -74,18 +74,18 @@ aplicarSepia:
 	pxor xmm1, xmm1				; pongo todos estos registros en 0
 	pxor xmm7, xmm7
 
-	movdqa xmm0, [rdi]			; pongo en xmm0 los 128b de los 4 pixeles
+	movdqa xmm0, [rdi]			; pongo en xmm0 los 128b de los 4 pixeles - xmm0 = p0 | p1 | p2 | p3
 
-	movdqu xmm8, xmm0
+	movdqu xmm8, xmm0			; xmm8 = p0 | p1 | p2 | p3
 
 	punpcklbw xmm0, xmm7		; xmm0 = 0 | a7 | . . . | 0 | a0
 	punpckhbw xmm8, xmm7		; xmm1 = 0 | a15 | . . . | 0 | a8
 
-	call sepiaEnDosPixeles
-	movups xmm9, xmm0
+	call sepiaEnDosPixeles      ; xmm0 = 0 | a7 | . . . | 0 | a0
+	movups xmm9, xmm0           
 
 	movups xmm0, xmm8
-	call sepiaEnDosPixeles
+	call sepiaEnDosPixeles      ; xmm0 = 0 | a15 | . . . | 0 | a8
 	pslldq xmm0, 3
 
 	addpd xmm0, xmm9
@@ -147,24 +147,26 @@ ret
 
 sepiaEnDosPixeles:				; asumo que en xmm0 tengo los dos pixeles desenpaquetados
 								; aca arranco la sumatoria de R + G + B. Lo que me importa es el 1er numero en xmm0, ahi va a estar el resultado
-	movups xmm1, xmm0			; copio en xmm0 en xmm1 R | G | B | A
+	movups xmm1, xmm0			; xmm0 = R0 | G0 | B0 | A0 | R1 | G1 | B1 | A1
+								; xmm1 = R0 | G0 | B0 | A0 | R1 | G1 | B1 | A1
+							    
+	psrldq xmm1, 2				; shifteo xmm1 =  G0 | B0 | A0 | R1 | G1 | B1 | A1 | .
 
-	psrldq xmm1, 2				; shifteo xmm1, G | B | A
+	addps xmm0, xmm1			; xmm0 = R0+G0 | . | . | . | R1+G1 | . | . | .
 
-	addpd xmm0, xmm1			; xmm0 R + G | G | B | A
-	psrldq xmm1, 2				; shifteo xmm1, B | A
-	addpd xmm0, xmm1			; xmm0 R + G + B | G | B | A
+	psrldq xmm1, 2				; shifteo xmm1 = B0 | A0 | R1 | G1 | B1 | A1 | . | .
+	addps xmm0, xmm1			; xmm0 = R0+G0+B0 | . | . | . | R1+G1+B1 | . | . | .
 
-	movups xmm1, xmm0			; copio el resultado en xmm1
-	mov r12, 0xFFFF000000000000FFFF
-	movq xmm7, r12
-	pand xmm1, xmm7				; y pongo todo el resto del registro en 0
+	mov r12, 0xFFFF 			; mascara para setear todo en 0 menos las sumas. 
+	movhpd xmm7, r12			
+	movlpd xmm7, r12			; xmm7 = 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0	
+	pand xmm0, xmm7				; xmm0 = R0+G0+B0 | 0 | 0 | 0 | R1+G1+B1 | 0 | 0 | 0
+	movups xmm1, xmm0			; xmm1 = R0+G0+B0 | 0 | 0 | 0 | R1+G1+B1 | 0 | 0 | 0
 
-	movups xmm0, xmm1
-	pslldq xmm1, 2
+	pslldq xmm0, 2				
 	paddw xmm0, xmm1
 	pslldq xmm1, 2
-	paddw xmm0, xmm1			; lo que hice aca es hacer que xmm0 sea SUMA | SUMA | SUMA | .
+	paddw xmm0, xmm1			; xmm0 = SUMA0 | SUMA0 | SUMA0 | . | SUMA1 | SUMA1 | SUMA1
 
 	pxor xmm7, xmm7
 	movupd xmm7, [val050302]		; esto es para que xmm7 sea 0.5 | 0.3 | 0.2 (lo saque de la ultima clase, creo q entran dos numeros FP por registro)
