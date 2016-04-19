@@ -76,17 +76,21 @@ aplicarSepia:
 
 	movdqa xmm0, [rdi]			; pongo en xmm0 los 128b de los 4 pixeles - xmm0 = p0 | p1 | p2 | p3
 
-	movdqu xmm8, xmm0				; xmm8 = p0 | p1 | p2 | p3
+	movdqu xmm15, xmm0				; xmm8 = p0 | p1 | p2 | p3
 
 	punpcklbw xmm0, xmm7		; xmm0 = 0 | a7 | . . . | 0 | a0
-	punpckhbw xmm8, xmm7		; xmm1 = 0 | a15 | . . . | 0 | a8
+	punpckhbw xmm15, xmm7		; xmm1 = 0 | a15 | . . . | 0 | a8
 
 	call sepiaEnDosPixeles 	; xmm0 = pix0Final | pix1Final | 0 | 0
-	movups xmm9, xmm0           
+	movups xmm9, xmm0   	  ; xmm9 = pix0Final | pix1Final | 0 | 0      
 
-	movups xmm0, xmm8
+	pxor xmm0, xmm0
+	pxor xmm1, xmm1					; pongo todos estos registros en 0
+	pxor xmm7, xmm7
+
+	movups xmm0, xmm15				
 	call sepiaEnDosPixeles  ; xmm0 = pix2Final | pix3Final | 0 | 0
-	pslldq xmm0, 3
+	pslldq xmm0, 8
 
 	addpd xmm0, xmm9
 
@@ -152,10 +156,10 @@ sepiaEnDosPixeles:					; asumo que en xmm0 tengo los dos pixeles desenpaquetados
 							    
 	psrldq xmm1, 2						; shifteo xmm1 =  G0 | B0 | A0 | R1 | G1 | B1 | A1 | .
 
-	addps xmm0, xmm1					; xmm0 = R0+G0 | . | . | . | R1+G1 | . | . | .
+	paddw xmm0, xmm1					; xmm0 = R0+G0 | . | . | . | R1+G1 | . | . | .
 
 	psrldq xmm1, 2						; shifteo xmm1 = B0 | A0 | R1 | G1 | B1 | A1 | . | .
-	addps xmm0, xmm1					; xmm0 = R0+G0+B0 | . | . | . | R1+G1+B1 | . | . | .
+	paddw xmm0, xmm1					; xmm0 = R0+G0+B0 | . | . | . | R1+G1+B1 | . | . | .
 
 	pxor xmm7, xmm7
 	mov r12, 0xFFFF 					; mascara para setear todo en 0 menos las sumas. 
@@ -168,53 +172,58 @@ sepiaEnDosPixeles:					; asumo que en xmm0 tengo los dos pixeles desenpaquetados
 
 	pslldq xmm0, 2				
 	paddw xmm0, xmm1
-	pslldq xmm1, 2
+	pslldq xmm0, 2
 	paddw xmm0, xmm1					; xmm0 = SUMA0 | SUMA0 | SUMA0 | 0 | SUMA1 | SUMA1 | SUMA1 | 0
 
 	pxor xmm7, xmm7
-	movupd xmm7, [val050302]	; xmm7 = 0.5 | 0.3 | 0.2
+	movupd xmm7, [val050302]	; xmm7 = 0.2 | 0.3 | 0.5
 	pxor xmm1, xmm1						
 
 	movups xmm3, xmm0					; xmm3 = SUMA0 | SUMA0 | SUMA0 | 0 | SUMA1 | SUMA1 | SUMA1 | 0 |
-	psrldq xmm3, 3						; xmm3 = SUMA1 | SUMA1 | SUMA1 | . | . | . | . | . |
-
+	psrldq xmm3, 8						; xmm3 = SUMA1 | SUMA1 | SUMA1 | . | . | . | . | . |
 
 	punpcklwd xmm0, xmm1			; xmm0 = SUMA0 | SUMA0 | SUMA0 | .	
 	pxor xmm2, xmm2						
 	
 	CVTDQ2PS xmm2, xmm0				; xmm2 = SUMA0 | SUMA0 | SUMA0 | . donde SUMA0 es FLOAT.
-	mulps xmm2, xmm7					; xmm2 = SUMA0*0.5 | SUMA0*0.3 | SUMA0*0.2 | .
+	mulps xmm2, xmm7					; xmm2 = SUMA0*0.2 | SUMA0*0.3 | SUMA0*0.5 | .
 
 	pxor xmm7, xmm7
-	CVTPS2DQ xmm7, xmm2				; xmm7 = SUMA0*0.5 | SUMA0*0.3 | SUMA0*0.2 | . donde son todos ENTEROS (tam double).
+	CVTPS2DQ xmm7, xmm2				; xmm7 = SUMA0*0.2 | SUMA0*0.3 | SUMA0*0.5 | . donde son todos ENTEROS (tam double).
 
 	packusdw xmm7, xmm2				; doubles -> words
-	;packuswb xmm7, xmm2				; words -> bytes (con saturacion)
-
-	movups xmm0, xmm7					; xmm0 <- final(pix0 y pix1)
+	packuswb xmm7, xmm2				; words -> bytes (con saturacion)
+	pxor xmm1, xmm1
+	mov r12, 0xFFFFFFFFFFFFFFFF		; me guardo los primeros 8 numeros (bytes) el resto esta en 0
+	movq xmm1, r12
+	pand xmm7, xmm1
+	
+	movups xmm0, xmm7					; xmm0 <- final(pix0)
 
 
 	pxor xmm1, xmm1
 	pxor xmm7, xmm7
-	movupd xmm7, [val050302]  ; xmm7 = 0.5 | 0.3 | 0.2 
+	movupd xmm7, [val050302]  ; xmm7 = 0.2 | 0.3 | 0.5 
 
 	punpcklwd xmm3, xmm1			; xmm3 = SUMA1 | SUMA1 | SUMA1 | .
 	pxor xmm2, xmm2
 	
-	CVTDQ2PS xmm2, xmm3				; xmm3 = SUMA1 | SUMA1 | SUMA1 | . donde SUMA1 es FLOAT.
-	mulps xmm2, xmm7					; xmm2 = SUMA1*0.5 | SUMA1*0.3 | SUMA1*0.2 | .
+	CVTDQ2PS xmm2, xmm3				; xmm2 = SUMA1 | SUMA1 | SUMA1 | . donde SUMA1 es FLOAT.
+	mulps xmm2, xmm7					; xmm2 = SUMA1*0.2 | SUMA1*0.3 | SUMA1*0.5 | .
 
 	pxor xmm7, xmm7						
-	CVTPS2DQ xmm7, xmm2				; xmm7 = SUMA1*0.5 | SUMA1*0.3 | SUMA1*0.2 | . donde son todos ENTEROS (tam double).
+	CVTPS2DQ xmm7, xmm2				; xmm7 = SUMA1*0.2 | SUMA1*0.3 | SUMA1*0.5 | . donde son todos ENTEROS (tam double).
 
 	packusdw xmm7, xmm2				; doubles -> words
-	;packuswb xmm7, xmm2				; words -> bytes
+	packuswb xmm7, xmm2				; words -> bytes
 
-	movups xmm1, xmm7					; xmm1 <- final (pix2 y pix3)
-
-	packuswb xmm0, xmm1				; xmm0 = pix0 | pix1 | . | .
-
+	pxor xmm1, xmm1
 	mov r12, 0xFFFFFFFFFFFFFFFF		; me guardo los primeros 8 numeros (bytes) el resto esta en 0
 	movq xmm1, r12
-	pand xmm0, xmm1
+	pand xmm7, xmm1
+
+	movups xmm1, xmm7					; xmm1 <- final (pix1)
+	pslldq xmm1, 4
+	paddw xmm0, xmm1					; xmm0 = pix0Final | pix1Final | 0 | 0
+
 ret
