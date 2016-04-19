@@ -90,9 +90,9 @@ aplicarSepia:
 
 	movups xmm0, xmm15				
 	call sepiaEnDosPixeles  ; xmm0 = pix2Final | pix3Final | 0 | 0
-	pslldq xmm0, 8
+	pslldq xmm0, 8					; xmm0 = 0 | 0 | pix2Final | pix3Final
 
-	addpd xmm0, xmm9
+	addpd xmm0, xmm9				; xmm0 = pix0Final | pix1Final | pix2Final | pix3Final
 
 	movdqa [rdi], xmm0
 
