@@ -130,7 +130,7 @@ aplicarFiltroldr:
 		pxor xmm7, xmm7
 		punpcklbw xmm0, xmm7			; xmm0 = 0 | a7 | . . . | 0 | a0
 		call sumarPixel
-		paddd xmm14, xmm0					; sumo el resultado en xmm14 (ojo! porq esta en dw) xmm14 = sumaP0 + .. + sumaP3  | 0 | 0 | 0
+		paddd xmm14, xmm0					; xmm14 = SUMAVECINOS  | 0 | 0 | 0
 
 		add r12, rsi
 
