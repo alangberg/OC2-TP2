@@ -1,3 +1,9 @@
+section .rodata
+	max: dd 4876875
+
+DEFAULT REL
+
+section .text
 
 global ldr_asm
 
@@ -7,6 +13,7 @@ global ldr_asm
  %define DST rsi
  %define COLS rdx
  %define FILAS rcx
+ %define ALPHA [rbp+16]
 
 section .data
 
@@ -18,7 +25,7 @@ section .text
 	;int cols,
 	;int src_row_size,
 	;int dst_row_size,
-	;int alpha)
+	;int alpha) rbp +16
 
 ldr_asm:
 	push rbp
@@ -58,6 +65,7 @@ ldr_asm:
 
 			mov rdi, rax
 			mov rsi, rbx
+			mov rdx, ALPHA
 
 			call aplicarFiltroldr
 
@@ -79,13 +87,16 @@ ldr_asm:
 ret
 
 
-;aplicarFiltroldr(src_rgba_t*, src_row_size)
+;aplicarFiltroldr(src_rgba_t*, src_row_size, ALPHA)
 aplicarFiltroldr:
 	push rbp
 	mov rbp, rsp
 	push r12
 	push r13
+	push r14
+	sub rsp, 8
 
+	mov r14, rdx
 	mov r13, rdi
 	lea r12, [r13 - 8]					; r12 <- I(i,j-2)
 	mov r9, rsi 								
@@ -138,6 +149,34 @@ aplicarFiltroldr:
 		cmp r8, 5
 	jne .ciclo_2
 
+
+
+
+	;xmm14 = SUMAVECINOS  | 0 | 0 | 0
+	pxor xmm1, xmm1
+	pxor xmm3, xmm3
+	movd xmm3, [r13] 		; xmm3 = R | G | B | A
+
+	mov rdi, max
+	movq xmm1, rdi			; xmm1 = max
+	pxor xmm0, xmm0
+	movq xmm0, r14			; xmm0 = alpha
+
+	pxor xmm2, xmm2
+	pxor xmm4, xmm4						
+
+	CVTDQ2PS xmm2, xmm14	; xmm2 = SUMAVECINOS | 0 | 0 | 0 donde SUMAVECINOS es FLOAT.
+	CVTDQ2PS xmm4, xmm0		; xmm4 = ALPHA | 0 | 0 | 0 donde ALPHA es FLOAT .
+	pxor xmm0, xmm0
+	CVTDQ2PS xmm0, xmm1		; xmm0 = MAX | 0 | 0 | 0 donde MAX es FLOAT.
+
+	mulps xmm2, xmm4 			; xmm2 = SUMA*ALPHA | 0 | 0 | 0
+	divsd xmm2, xmm1 			; xmm2 = (SUMA*ALPHA) / MAX | 0 | 0 | 0
+
+
+
+	add rsp, 8
+	pop r14
 	pop r13
 	pop r12
 	pop rbp
