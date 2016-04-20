@@ -101,11 +101,11 @@ aplicarFiltroldr:
 		punpckhbw xmm15, xmm7			; xmm15 = 0 | a15 | . . . | 0 | a8
 
 		call sumarPixeles
-		paddd xmm14, xmm0					; xmm14 = R0+G0+B0 + R1+G1+B1 | 0 | 0 | 0 | 0 | 0 | 0 | 0
+		paddd xmm14, xmm0					; xmm14 = R0+G0+B0 + R1+G1+B1 | 0 | 0 | 0 
 
 		movups xmm0, xmm15
-		call sumarPixeles
-		paddd xmm14, xmm0					; sumo el resultado en xmm14 (ojo! porq esta en dw) xmm14 = sumaP0 + .. + sumaP3  | 0 | 0 | 0
+		call sumarPixeles					; xmm0 = R2+G2+B2 + R3+G3+B3 | 0 | 0 | 0 
+		paddd xmm14, xmm0					; xmm14 = sumaP0 + .. + sumaP3  | 0 | 0 | 0 
 
 		add rdx, rsi
 
@@ -119,7 +119,9 @@ aplicarFiltroldr:
 	sub rdx, r9									; rdx <- I(i-2,j+2)
 
 	.ciclo_2:
+
 		movd xmm0, [rdx]					; pongo en xmm0 los 4Bytes del pixel - xmm0 = p[i+2,j-2] | . | . | .
+
 		pxor xmm7, xmm7
 		punpcklbw xmm0, xmm7			; xmm0 = 0 | a7 | . . . | 0 | a0
 		call sumarPixel
@@ -216,7 +218,7 @@ sumarPixeles:
 	pxor xmm7, xmm7
 	mov r12, 0xFFFF 					; mascara para setear todo en 0 menos las sumas. 
 	movq xmm7, r12						; xmm7 = 1 0 0 0 0 0 0 0
-	pand xmm0, xmm7						; xmm0 = R0+G0+B0 + R1+G1+B1 | 0 | 0 | 0 | 0 | 0 | 0 | 0
+	pand xmm0, xmm7						; xmm0 = R0+G0+B0 + R1+G1+B1 | 0 | 0 | 0 |
 ret
 
 sumarPixel:
