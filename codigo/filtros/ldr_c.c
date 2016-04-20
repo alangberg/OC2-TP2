@@ -33,14 +33,18 @@ void ldr_c    (
         for (int j = 2; j < cols-2; j++){
             
             float sumaRGB = 0;
-            for(int k = 0; k < 4 ; k++){
-                for(int l = 0; l < 4; l++){
+            for(int k = 0; k < 5 ; k++){
+                for(int l = 0; l < 5; l++){
                     int fila = i-2+k;
                     int col = (j-2+l)*4;
+                   float parcial = src_matrix[fila][col+0] + src_matrix[fila][col+1] + src_matrix[fila][col+2];
                    sumaRGB += src_matrix[fila][col+0] + src_matrix[fila][col+1] + src_matrix[fila][col+2];
+                   if (i == 2 && j == 2 && k == 0 && l == 4) printf("%f\n", parcial);
                  }
             }
 
+            if (i == 2 && j == 2) printf("%f\n", sumaRGB);
+            
 
 
             float ldrB = src_matrix[i][j*4 + 0] + alpha * sumaRGB * src_matrix[i][j*4 + 0] / max;
@@ -53,3 +57,21 @@ void ldr_c    (
         }
     }
 }
+
+
+
+/*
+
+
+8450.000000
+
+
+PIXELES = 2279
+
+
+*/
+
+
+
+
+

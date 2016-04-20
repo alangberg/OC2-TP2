@@ -76,10 +76,10 @@ aplicarSepia:
 
 	movdqa xmm0, [rdi]			; pongo en xmm0 los 128b de los 4 pixeles - xmm0 = p0 | p1 | p2 | p3
 
-	movdqu xmm15, xmm0				; xmm8 = p0 | p1 | p2 | p3
+	movdqu xmm15, xmm0				; xmm15 = p0 | p1 | p2 | p3
 
 	punpcklbw xmm0, xmm7		; xmm0 = 0 | a7 | . . . | 0 | a0
-	punpckhbw xmm15, xmm7		; xmm1 = 0 | a15 | . . . | 0 | a8
+	punpckhbw xmm15, xmm7		; xmm15 = 0 | a15 | . . . | 0 | a8
 
 	call sepiaEnDosPixeles 	; xmm0 = pix0Final | pix1Final | 0 | 0
 	movups xmm9, xmm0   	  ; xmm9 = pix0Final | pix1Final | 0 | 0      
