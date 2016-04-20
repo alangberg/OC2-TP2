@@ -1,5 +1,5 @@
 section .rodata
-	val050302: dd 0.2, 0.3, 0.5
+	val050302: dd 0.2, 0.3, 0.5, 1.0
 
 DEFAULT REL
 
@@ -64,19 +64,18 @@ ret
 aplicarSepia:
 	push rbp
 	mov rbp, rsp
-	push r13
 	push r12
+	sub rsp, 8
 
-	xor r12, r12
-	xor r13, r13
+	mov r12, rdi
 
 	pxor xmm0, xmm0
 	pxor xmm1, xmm1					; pongo todos estos registros en 0
 	pxor xmm7, xmm7
 
-	movdqa xmm0, [rdi]			; pongo en xmm0 los 128b de los 4 pixeles - xmm0 = p0 | p1 | p2 | p3
+	movdqa xmm0, [r12]			; pongo en xmm0 los 128b de los 4 pixeles - xmm0 = p0 | p1 | p2 | p3
 
-	movdqu xmm15, xmm0				; xmm15 = p0 | p1 | p2 | p3
+	movdqu xmm15, xmm0			; xmm15 = p0 | p1 | p2 | p3
 
 	punpcklbw xmm0, xmm7		; xmm0 = 0 | a7 | . . . | 0 | a0
 	punpckhbw xmm15, xmm7		; xmm15 = 0 | a15 | . . . | 0 | a8
@@ -94,10 +93,11 @@ aplicarSepia:
 
 	addpd xmm0, xmm9				; xmm0 = pix0Final | pix1Final | pix2Final | pix3Final
 
-	movdqa [rdi], xmm0
+	movdqa [r12], xmm0
 
+
+	add rsp, 8
 	pop r12
-	pop r13
 	pop rbp
 ret
 
@@ -162,8 +162,8 @@ sepiaEnDosPixeles:					; asumo que en xmm0 tengo los dos pixeles desenpaquetados
 	paddw xmm0, xmm1					; xmm0 = R0+G0+B0 | . | . | . | R1+G1+B1 | . | . | .
 
 	pxor xmm7, xmm7
-	mov r12, 0xFFFF 					; mascara para setear todo en 0 menos las sumas. 
-	movq xmm7, r12						; xmm7 = 1 0 0 0 0 0 0 0
+	mov rdi, 0xFFFF 					; mascara para setear todo en 0 menos las sumas. 
+	movq xmm7, rdi						; xmm7 = 1 0 0 0 0 0 0 0
 	movups xmm8, xmm7					; xmm8 = 1 0 0 0 0 0 0 0
 	pslldq xmm7, 8						; xmm7 = 0 0 0 0 1 0 0 0
 	addps xmm7, xmm8					; xmm7 = 1 0 0 0 1 0 0 0							
@@ -176,7 +176,7 @@ sepiaEnDosPixeles:					; asumo que en xmm0 tengo los dos pixeles desenpaquetados
 	paddw xmm0, xmm1					; xmm0 = SUMA0 | SUMA0 | SUMA0 | 0 | SUMA1 | SUMA1 | SUMA1 | 0
 
 	pxor xmm7, xmm7
-	movupd xmm7, [val050302]	; xmm7 = 0.2 | 0.3 | 0.5
+	movupd xmm7, [val050302]	; xmm7 = 0.2 | 0.3 | 0.5 | 1
 	pxor xmm1, xmm1						
 
 	movups xmm3, xmm0					; xmm3 = SUMA0 | SUMA0 | SUMA0 | 0 | SUMA1 | SUMA1 | SUMA1 | 0 |
@@ -194,8 +194,8 @@ sepiaEnDosPixeles:					; asumo que en xmm0 tengo los dos pixeles desenpaquetados
 	packusdw xmm7, xmm2				; doubles -> words
 	packuswb xmm7, xmm2				; words -> bytes (con saturacion)
 	pxor xmm1, xmm1
-	mov r12, 0xFFFFFFFFFFFFFFFF		; me guardo los primeros 8 numeros (bytes) el resto esta en 0
-	movq xmm1, r12
+	mov rdi, 0xFFFFFFFFFFFFFFFF		; me guardo los primeros 8 numeros (bytes) el resto esta en 0
+	movq xmm1, rdi
 	pand xmm7, xmm1
 	
 	movups xmm0, xmm7					; xmm0 <- final(pix0)
@@ -218,8 +218,8 @@ sepiaEnDosPixeles:					; asumo que en xmm0 tengo los dos pixeles desenpaquetados
 	packuswb xmm7, xmm2				; words -> bytes
 
 	pxor xmm1, xmm1
-	mov r12, 0xFFFFFFFFFFFFFFFF		; me guardo los primeros 8 numeros (bytes) el resto esta en 0
-	movq xmm1, r12
+	mov rdi, 0xFFFFFFFFFFFFFFFF		; me guardo los primeros 8 numeros (bytes) el resto esta en 0
+	movq xmm1, rdi
 	pand xmm7, xmm1
 
 	movups xmm1, xmm7					; xmm1 <- final (pix1)

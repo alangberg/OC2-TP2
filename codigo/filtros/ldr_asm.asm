@@ -40,8 +40,8 @@ ldr_asm:
 
 	xor i, i	; r12 = i = 0
 	mov i, 2	; i = 2
-	sub FILAS, 2
-	sub COLS, 2
+	sub r11, 2
+	sub r10, 2
 
 	.ciclo_filas:
 		xor j, j	; r13 = j = 0
@@ -51,10 +51,10 @@ ldr_asm:
 
 			mov rdi, r14
 			mov rsi, i
-			mov rcx, j
-			mov rdx, r10
+			mov rdx, j
+			mov rcx, r10
 
-			call matriz 
+			call matriz
 
 			mov rdi, rax
 			mov rsi, rbx
@@ -62,11 +62,11 @@ ldr_asm:
 			call aplicarFiltroldr
 
 			inc j
-			cmp j, COLS
+			cmp j, r10
 		jne .ciclo_columnas
 
 		inc i
-		cmp i, FILAS
+		cmp i, r11
 	jne .ciclo_filas
 
 	add rsp, 8
@@ -81,18 +81,23 @@ ret
 
 ;aplicarFiltroldr(src_rgba_t*, src_row_size)
 aplicarFiltroldr:
+	push rbp
+	mov rbp, rsp
+	push r12
+	push r13
 
-	lea rdx, [rdi - 8]					; rdx <- I(i,j-2)
+	mov r13, rdi
+	lea r12, [r13 - 8]					; r12 <- I(i,j-2)
 	mov r9, rsi 								
 	add r9, r9                  ; r9 <- src_row_size*2 
 
-	sub rdx, r9 								; rdx <- I(i-2,j-2)
+	sub r12, r9 								; r12 <- I(i-2,j-2)
 	
 	xor r8, r8
 	pxor xmm14, xmm14
 
 	.ciclo:
-		movdqu xmm0, [rdx]				; pongo en xmm0 los 128b de los 4 pixeles - xmm0 = p[i-2,j-2] | p[i-2,j-1] | p[i-2,j] | p[i-2,j+1] 
+		movdqu xmm0, [r12]				; pongo en xmm0 los 128b de los 4 pixeles - xmm0 = p[i-2,j-2] | p[i-2,j-1] | p[i-2,j] | p[i-2,j+1] 
 
 		pxor xmm7, xmm7
 		movdqu xmm15, xmm0				; xmm15 = p0 | p1 | p2 | p3
@@ -107,7 +112,7 @@ aplicarFiltroldr:
 		call sumarPixeles					; xmm0 = R2+G2+B2 + R3+G3+B3 | 0 | 0 | 0 
 		paddd xmm14, xmm0					; xmm14 = sumaP0 + .. + sumaP3  | 0 | 0 | 0 
 
-		add rdx, rsi
+		add r12, rsi
 
 		inc r8
 		cmp r8, 5
@@ -115,25 +120,27 @@ aplicarFiltroldr:
 
 	xor r8, r8
 
-	lea rdx, [rdi + 8]					
-	sub rdx, r9									; rdx <- I(i-2,j+2)
+	lea r12, [r13 + 8]					
+	sub r12, r9									; r12 <- I(i-2,j+2)
 
 	.ciclo_2:
 
-		movd xmm0, [rdx]					; pongo en xmm0 los 4Bytes del pixel - xmm0 = p[i+2,j-2] | . | . | .
+		movd xmm0, [r12]					; pongo en xmm0 los 4Bytes del pixel - xmm0 = p[i+2,j-2] | . | . | .
 
 		pxor xmm7, xmm7
 		punpcklbw xmm0, xmm7			; xmm0 = 0 | a7 | . . . | 0 | a0
 		call sumarPixel
 		paddd xmm14, xmm0					; sumo el resultado en xmm14 (ojo! porq esta en dw) xmm14 = sumaP0 + .. + sumaP3  | 0 | 0 | 0
 
-		add rdx, rsi
+		add r12, rsi
 
 		inc r8
 		cmp r8, 5
 	jne .ciclo_2
 
-
+	pop r13
+	pop r12
+	pop rbp
 ret
 
 
@@ -163,7 +170,7 @@ multiplicar:
 	pop r12
 	pop rbp
 ret
-
+;								rdi       rsi    rdx       rcx
 ;pixel* matriz(matriz*, int i, int j, int #filas)
 matriz:
 	push rbp
@@ -172,11 +179,11 @@ matriz:
 	sub rsp, 8
 
 	mov r12, rdi
-	mov rdi, rdx
+	mov rdi, rcx
 
 	call multiplicar
 
-	add rax, rcx
+	add rax, rdx
 
 	lea rax, [r12 + rax*4]
 
@@ -199,8 +206,8 @@ sumarPixeles:
 	paddw xmm0, xmm1					; xmm0 = R0+G0+B0 | . | . | . | R1+G1+B1 | . | . | .
 
 	pxor xmm7, xmm7
-	mov r12, 0xFFFF 					; mascara para setear todo en 0 menos las sumas. 
-	movq xmm7, r12						; xmm7 = 1 0 0 0 0 0 0 0
+	mov rdi, 0xFFFF 					; mascara para setear todo en 0 menos las sumas. 
+	movq xmm7, rdi						; xmm7 = 1 0 0 0 0 0 0 0
 	movups xmm8, xmm7					; xmm8 = 1 0 0 0 0 0 0 0
 	pslldq xmm7, 8						; xmm7 = 0 0 0 0 1 0 0 0
 	addps xmm7, xmm8					; xmm7 = 1 0 0 0 1 0 0 0							
@@ -216,8 +223,8 @@ sumarPixeles:
 	paddd xmm0, xmm1					; xmm0 = R0+G0+B0 + R1+G1+B1 | 0 | R1+G1+B1 | 0 
 	
 	pxor xmm7, xmm7
-	mov r12, 0xFFFF 					; mascara para setear todo en 0 menos las sumas. 
-	movq xmm7, r12						; xmm7 = 1 0 0 0 0 0 0 0
+	mov rdi, 0xFFFF 					; mascara para setear todo en 0 menos las sumas. 
+	movq xmm7, rdi						; xmm7 = 1 0 0 0 0 0 0 0
 	pand xmm0, xmm7						; xmm0 = R0+G0+B0 + R1+G1+B1 | 0 | 0 | 0 |
 ret
 
@@ -229,8 +236,8 @@ sumarPixel:
 		paddw xmm0, xmm1				; xmm0 = R0+G0+B0 | . | . | . | . | . | . | .
 		
 		pxor xmm7, xmm7
-		mov r12, 0xFFFF 				; mascara para setear todo en 0 menos las sumas. 
-		movq xmm7, r12					; xmm7 = 1 0 0 0 0 0 0 0
+		mov rdi, 0xFFFF 				; mascara para setear todo en 0 menos las sumas. 
+		movq xmm7, rdi					; xmm7 = 1 0 0 0 0 0 0 0
 		pand xmm0, xmm7					; xmm0 = R0+G0+B0 | 0 | 0 | 0 | 0 | 0 | 0 | 0
 ret
 

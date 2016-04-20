@@ -37,9 +37,7 @@ void ldr_c    (
                 for(int l = 0; l < 5; l++){
                     int fila = i-2+k;
                     int col = (j-2+l)*4;
-                   float parcial = src_matrix[fila][col+0] + src_matrix[fila][col+1] + src_matrix[fila][col+2];
                    sumaRGB += src_matrix[fila][col+0] + src_matrix[fila][col+1] + src_matrix[fila][col+2];
-                   if (i == 2 && j == 2 && k == 0 && l == 4) printf("%f\n", parcial);
                  }
             }
 
