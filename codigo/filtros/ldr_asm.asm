@@ -1,5 +1,5 @@
 section .rodata
-	max: dd 4876875
+	;max: dd 0x004A6A4B
 
 DEFAULT REL
 
@@ -96,6 +96,7 @@ aplicarFiltroldr:
 	push r14
 	sub rsp, 8
 
+	xor r14, r14
 	mov r14, rdx
 	mov r13, rdi
 	lea r12, [r13 - 8]					; r12 <- I(i,j-2)
@@ -150,17 +151,20 @@ aplicarFiltroldr:
 	jne .ciclo_2
 
 
-
-
 	;xmm14 = SUMAVECINOS  | 0 | 0 | 0
 	pxor xmm1, xmm1
 	pxor xmm3, xmm3
-	movd xmm3, [r13] 		; xmm3 = R | G | B | A
+	movd xmm3, [r13] 			; xmm3 = R | G | B | A
 
-	mov rdi, max
-	movq xmm1, rdi			; xmm1 = max
+	mov rdi, 0x004A6A4B
+	movq xmm1, rdi				; xmm1 = max
 	pxor xmm0, xmm0
-	movq xmm0, r14			; xmm0 = alpha
+	movq xmm0, r14				; xmm0 = alpha
+
+	pxor xmm7, xmm7
+	mov rdi, 0xFF 				; mascara para setear todo en 0 menos las sumas. 
+	movq xmm7, rdi				; xmm7 = 1 0 0 0 0 0 0 0
+	pand xmm0, xmm7				; xmm0 = R0+G0+B0 | 0 | 0 | 0 | 0 | 0 | 0 | 0
 
 	pxor xmm2, xmm2
 	pxor xmm4, xmm4						
@@ -171,7 +175,7 @@ aplicarFiltroldr:
 	CVTDQ2PS xmm0, xmm1		; xmm0 = MAX | 0 | 0 | 0 donde MAX es FLOAT.
 
 	mulps xmm2, xmm4 			; xmm2 = SUMA*ALPHA | 0 | 0 | 0
-	divsd xmm2, xmm1 			; xmm2 = (SUMA*ALPHA) / MAX | 0 | 0 | 0
+	divsd xmm2, xmm1 			; xmm2 = SUMA/ MAX | 0 | 0 | 0
 
 
 
