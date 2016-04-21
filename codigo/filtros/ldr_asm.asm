@@ -69,6 +69,15 @@ ldr_asm:
 
 			call aplicarFiltroldr
 
+			mov rdi, r15
+			mov rsi, i
+			mov rdx, j
+			mov rcx, r10
+
+			call matriz
+			mov rdi, rax
+			movdqa [rdi], xmm0
+
 			inc j
 			cmp j, r10
 		jne .ciclo_columnas
@@ -107,6 +116,7 @@ aplicarFiltroldr:
 	
 	xor r8, r8
 	pxor xmm14, xmm14
+	pxor xmm0, xmm0
 
 	.ciclo:
 		movdqu xmm0, [r12]				; pongo en xmm0 los 128b de los 4 pixeles - xmm0 = p[i-2,j-2] | p[i-2,j-1] | p[i-2,j] | p[i-2,j+1] 
@@ -174,10 +184,61 @@ aplicarFiltroldr:
 	pxor xmm0, xmm0
 	CVTDQ2PS xmm0, xmm1		; xmm0 = MAX | 0 | 0 | 0 donde MAX es FLOAT.
 
-	mulps xmm2, xmm4 			; xmm2 = SUMA*ALPHA | 0 | 0 | 0
-	divsd xmm2, xmm1 			; xmm2 = SUMA/ MAX | 0 | 0 | 0
+	pxor xmm3, xmm3
+	movups xmm3, xmm0			; xmm3 = MAX | 0 | 0 | 0
+	pslldq xmm3, 4        ; xmm3 =  0 | MAX | 0 | 0
+	paddb	xmm0, xmm3			; xmm0 = MAX | MAX | 0 | 0
+	pslldq xmm3, 4        ; xmm3 =  0 | 0 | MAX | 0
+	paddb	xmm0, xmm3			; xmm0 = MAX | MAX | MAX | 0
+	pslldq xmm3, 4        ; xmm3 =  0 | 0 | 0 | MAX
+	paddb	xmm0, xmm3			; xmm0 = MAX | MAX | MAX | MAX
 
 
+
+	mulss xmm2, xmm4 			; xmm2 = SUMA*ALPHA | 0 | 0 | 0
+
+	pxor xmm3, xmm3
+	movups xmm3, xmm2			; xmm3 = SUMA*ALPHA | 0 | 0 | 0
+	pslldq xmm3, 4        ; xmm3 =  0 | SUMA*ALPHA | 0 | 0
+	paddb	xmm2, xmm3			; xmm2 = SUMA*ALPHA | SUMA*ALPHA | 0 | 0
+	pslldq xmm3, 4        ; xmm3 =  0 | 0 | SUMA*ALPHA | 0
+	paddb	xmm2, xmm3			; xmm2 = SUMA*ALPHA | SUMA*ALPHA | SUMA*ALPHA | 0
+	
+	pxor xmm3, xmm3
+	movd xmm3, [r13]			; xmm3 = R | G | B | A | 0..<11 times more>
+	pxor xmm7, xmm7
+	punpcklbw xmm3, xmm7	
+	pxor xmm7, xmm7
+	punpcklwd xmm3, xmm7
+	pxor xmm5, xmm5 
+	CVTDQ2PS xmm5, xmm3   ; xmm5 = R | G | B | A donde son todos FLOAT(db)
+
+	mulps	xmm2, xmm5			; xmm2 = SUMA*ALPHA*R | SUMA*ALPHA*G | SUMA*ALPHA*B | 0
+ 
+	divps xmm2, xmm0 			; xmm2 = (SUMA*ALPHA*R)/ MAX | (SUMA*ALPHA*G)/ MAX | (SUMA*ALPHA*B)/ MAX | 0
+
+	pxor xmm7, xmm7
+	CVTPS2DQ xmm7, xmm2		; xmm7 = SUMA*ALPHA*R)/ MAX | SUMA*ALPHA*G)/ MAX | (SUMA*ALPHA*B)/ MAX | 0 donde son todos ENTEROS (tam double).
+
+	packusdw xmm7, xmm2		; doubles -> words
+	packuswb xmm7, xmm2		; words -> bytes (con saturacion)
+
+	pxor xmm3, xmm3
+	movd xmm3, [r13] 			; xmm3 = R | G | B | A
+
+	pxor xmm5, xmm5
+	mov rdi, 0xFFFFFFFF 	; mascara para setear todo en 0 menos las sumas. 
+	movq xmm5, rdi				; xmm7 = 1 1 1 1 0 0 0 0
+	pand xmm3, xmm5				; xmm0 = R | G | B | A | 0 | 0 | 0 | 0
+
+	paddusb xmm7, xmm3			; xmm7 = R+(SUMA*ALPHA*R)/ MAX | G+(SUMA*ALPHA*G)/ MAX | B+(SUMA*ALPHA*B)/ MAX | A+0
+
+	pxor xmm5, xmm5
+	mov rdi, 0xFFFFFFFF 	; mascara para setear todo en 0 menos las sumas. 
+	movq xmm5, rdi				; xmm7 = 1 1 1 1 0 0 0 0
+	pand xmm7, xmm5				; xmm7 = RFINAL | GFINAL | BFINAL | AFINAL | 0 | 0 | 0 | 0
+	
+	movups xmm0, xmm7    
 
 	add rsp, 8
 	pop r14
