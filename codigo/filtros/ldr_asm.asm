@@ -109,7 +109,7 @@ aplicarFiltroldr:
 	sub rsp, 8
 
 	xor r14, r14
-	mov r14, rdx
+	mov r14d, edx
 	mov r13, rdi
 	lea r12, [r13 - 8]					; r12 <- I(i,j-2)
 	mov r9, rsi 								
@@ -172,12 +172,7 @@ aplicarFiltroldr:
 	mov rdi, 0x004A6A4B
 	movq xmm1, rdi				; xmm1 = max
 	pxor xmm0, xmm0
-	movq xmm0, r14				; xmm0 = alpha
-
-	pxor xmm7, xmm7
-	mov rdi, 0xFF 				; mascara para setear todo en 0 menos las sumas. 
-	movq xmm7, rdi				; xmm7 = 1 0 0 0 0 0 0 0
-	pand xmm0, xmm7				; xmm0 = R0+G0+B0 | 0 | 0 | 0 | 0 | 0 | 0 | 0
+	movd xmm0, r14d				; xmm0 = alpha
 
 	pxor xmm2, xmm2
 	pxor xmm4, xmm4						
@@ -195,8 +190,6 @@ aplicarFiltroldr:
 	paddb	xmm0, xmm3			; xmm0 = MAX | MAX | MAX | 0
 	pslldq xmm3, 4        ; xmm3 =  0 | 0 | 0 | MAX
 	paddb	xmm0, xmm3			; xmm0 = MAX | MAX | MAX | MAX
-
-
 
 	mulss xmm2, xmm4 			; xmm2 = SUMA*ALPHA | 0 | 0 | 0
 
@@ -221,27 +214,25 @@ aplicarFiltroldr:
 	divps xmm2, xmm0 			; xmm2 = (SUMA*ALPHA*R)/ MAX | (SUMA*ALPHA*G)/ MAX | (SUMA*ALPHA*B)/ MAX | 0
 
 	pxor xmm7, xmm7
-	CVTPS2DQ xmm7, xmm2		; xmm7 = SUMA*ALPHA*R)/ MAX | SUMA*ALPHA*G)/ MAX | (SUMA*ALPHA*B)/ MAX | 0 donde son todos ENTEROS (tam double).
-
-	packusdw xmm7, xmm2		; doubles -> words
-	packuswb xmm7, xmm2		; words -> bytes (con saturacion)
+	CVTPS2DQ xmm7, xmm2		; xmm7 = (SUMA*ALPHA*R)/ MAX | (SUMA*ALPHA*G)/ MAX | (SUMA*ALPHA*B)/ MAX | 0 donde son todos ENTEROS (tam double).
 
 	pxor xmm3, xmm3
 	movd xmm3, [r13] 			; xmm3 = R | G | B | A
-
 	pxor xmm5, xmm5
-	mov rdi, 0xFFFFFFFF 	; mascara para setear todo en 0 menos las sumas. 
-	movq xmm5, rdi				; xmm7 = 1 1 1 1 0 0 0 0
-	pand xmm3, xmm5				; xmm0 = R | G | B | A | 0 | 0 | 0 | 0
+	punpcklbw xmm3, xmm5
+	pxor xmm5, xmm5
+	punpcklwd xmm3, xmm5 ; xmm3 = R | G | B | A
 
-	paddusb xmm7, xmm3			; xmm7 = R+(SUMA*ALPHA*R)/ MAX | G+(SUMA*ALPHA*G)/ MAX | B+(SUMA*ALPHA*B)/ MAX | A+0
+	paddd xmm7, xmm3			; xmm7 = R+(SUMA*ALPHA*R)/ MAX | G+(SUMA*ALPHA*G)/ MAX | B+(SUMA*ALPHA*B)/ MAX | A+0
+	
+	packusdw xmm7, xmm2		; doubles -> words
+	packuswb xmm7, xmm2		; words -> bytes (con saturacion y signo)
 
 	pxor xmm5, xmm5
 	mov rdi, 0xFFFFFFFF 	; mascara para setear todo en 0 menos las sumas. 
 	movq xmm5, rdi				; xmm7 = 1 1 1 1 0 0 0 0
 	pand xmm7, xmm5				; xmm7 = RFINAL | GFINAL | BFINAL | AFINAL | 0 | 0 | 0 | 0
 	
-
 	movups xmm0, xmm7    
 
 	add rsp, 8
@@ -252,7 +243,7 @@ aplicarFiltroldr:
 ret
 
 
-										;rdi    rsi
+        						;rdi    rsi
 ; void multiplicar(int a, int b)
 multiplicar:
 	push rbp
