@@ -47,8 +47,8 @@ ldr_asm:
 
 	xor i, i	; r12 = i = 0
 	mov i, 2	; i = 2
-	sub r10, 1
-	sub r11, 1
+	sub r10, 2
+	sub r11, 2
 
 	.ciclo_filas:
 		xor j, j	; r13 = j = 0
@@ -59,7 +59,7 @@ ldr_asm:
 			mov rdi, r14
 			mov rsi, i
 			mov rdx, j
-			add r10, 1
+			add r10, 2
 			mov rcx, r10
 
 			call matriz
@@ -80,7 +80,7 @@ ldr_asm:
 			call matriz
 			mov rdi, rax
 			movd [rdi], xmm0
-			sub r10, 1
+			sub r10, 2
 			inc j
 			cmp j, r10
 		jne .ciclo_columnas

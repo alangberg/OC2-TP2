@@ -42,25 +42,27 @@ cropflip_asm:
 		xor j, j	; r13 = j + Offset_x = Offset_x
 		.ciclo_columnas:
 
-			mov r10, COLS
-
-			mov rdi, r15
-			mov rsi, i
-			add rsi, OFFSET_Y
-			mov rdx, j
-			add rdx, OFFSET_X
+			mov r10, COLS ;Muevo columnas
+			mov rdi, r15 ;Muevo DST*
+			mov rsi, i ; i = Fila del pixel
+			add esi, OFFSET_Y ;i = i + Offset_y
+			mov rdx, j ;j = Columna del pixel
+			add edx, OFFSET_X ; j = j + Offset_x
 			mov rcx, r10
+
 			call matriz
 
 			mov rbx, rax
-
+			
+			xor rsi, rsi
+			xor rdx, rdx
 			mov rdi, r14
-			mov rsi, OFFSET_Y
-			add rsi, TAM_Y
+			mov esi, OFFSET_Y
+			add esi, TAM_Y
 			sub rsi, i
 			dec rsi
 			mov rdx, j
-			add rdx, OFFSET_X
+			add edx, OFFSET_X
 			mov rcx, r10
 			call matriz
 
@@ -157,7 +159,7 @@ multiplicar:
 	pop rbp
 ret
 
-;pixel* matriz(matriz*, int i, int j, int #filas)
+;pixel* matriz(matriz*, int i, int j, int #columnas)
 matriz:
 	push rbp
 	mov rbp, rsp
