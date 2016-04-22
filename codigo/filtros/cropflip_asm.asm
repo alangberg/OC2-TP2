@@ -33,34 +33,34 @@ cropflip_asm:
 	sub rsp, 8
 
 	xor i, i	; r12 = i + Offset_y = Offset_y
+
+
 	mov r14, SRC
 	mov r15, DST
 
 	.ciclo_filas:
 		xor j, j	; r13 = j + Offset_x = Offset_x
-
 		.ciclo_columnas:
 
-			mov r10, FILAS
+			mov r10, COLS
 
 			mov rdi, r15
 			mov rsi, i
-			add esi, OFFSET_Y
+			add rsi, OFFSET_Y
 			mov rdx, j
-			add edx, OFFSET_X
-			mov rcx, TAM_X
+			add rdx, OFFSET_X
+			mov rcx, r10
 			call matriz
 
 			mov rbx, rax
 
 			mov rdi, r14
-			xor rsi, rsi
-			mov esi, OFFSET_Y
+			mov rsi, OFFSET_Y
 			add rsi, TAM_Y
 			sub rsi, i
 			dec rsi
 			mov rdx, j
-			add edx, OFFSET_X
+			add rdx, OFFSET_X
 			mov rcx, r10
 			call matriz
 
@@ -70,8 +70,7 @@ cropflip_asm:
 			call copiarPixeles
 
 			mov rdi, r15
-			xor rsi, rsi
-			mov esi, TAM_Y
+			mov rsi, TAM_Y
 			dec rsi
 			sub rsi, i			
 			mov rdx, j
@@ -81,11 +80,10 @@ cropflip_asm:
 			mov rbx, rax
 
 			mov rdi, r14
-			xor rsi, rsi
-			mov esi, OFFSET_Y
+			mov rsi, OFFSET_Y
 			add rsi, i
 			mov rdx, j
-			add edx, OFFSET_X
+			add rdx, OFFSET_X
 			mov rcx, r10
 			call matriz
 
@@ -138,7 +136,6 @@ multiplicar:
 	push rbp
 	mov rbp, rsp
 	push r12
-	sub rsp, 8
 
 	xor rax, rax
 	cmp rsi, 0
@@ -156,24 +153,23 @@ multiplicar:
 	jne .ciclo
 
 	.fin:
-	add rsp, 8
 	pop r12
 	pop rbp
 ret
-;								rdx           rcx
-;pixel* matriz(matriz*, int i, int j, int #columnas	)
+
+;pixel* matriz(matriz*, int i, int j, int #filas)
 matriz:
 	push rbp
 	mov rbp, rsp
 	push r12
 	sub rsp, 8
-	xor rax, rax
+
 	mov r12, rdi
-	mov rdi, rdx
+	mov rdi, rcx
 
 	call multiplicar
 
-	add rax, rcx
+	add rax, rdx
 
 	lea rax, [r12 + rax*4]
 

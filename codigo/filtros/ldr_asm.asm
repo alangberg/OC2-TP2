@@ -59,6 +59,7 @@ ldr_asm:
 			mov rdi, r14
 			mov rsi, i
 			mov rdx, j
+			add r10, 1
 			mov rcx, r10
 
 			call matriz
@@ -79,7 +80,7 @@ ldr_asm:
 			call matriz
 			mov rdi, rax
 			movd [rdi], xmm0
-
+			sub r10, 1
 			inc j
 			cmp j, r10
 		jne .ciclo_columnas
@@ -251,7 +252,7 @@ aplicarFiltroldr:
 ret
 
 
-
+										;rdi    rsi
 ; void multiplicar(int a, int b)
 multiplicar:
 	push rbp
