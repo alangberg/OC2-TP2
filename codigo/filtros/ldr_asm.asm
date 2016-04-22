@@ -78,7 +78,7 @@ ldr_asm:
 
 			call matriz
 			mov rdi, rax
-			movq [rdi], xmm0
+			movd [rdi], xmm0
 
 			inc j
 			cmp j, r10
