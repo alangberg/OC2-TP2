@@ -47,8 +47,8 @@ ldr_asm:
 
 	xor i, i	; r12 = i = 0
 	mov i, 2	; i = 2
-	sub r11, 2
-	sub r10, 2
+	sub r10, 1
+	sub r11, 1
 
 	.ciclo_filas:
 		xor j, j	; r13 = j = 0
@@ -65,7 +65,9 @@ ldr_asm:
 
 			mov rdi, rax
 			mov rsi, rbx
-			mov rdx, ALPHA
+
+			xor rdx, rdx
+			mov edx, ALPHA
 
 			call aplicarFiltroldr
 
@@ -76,7 +78,7 @@ ldr_asm:
 
 			call matriz
 			mov rdi, rax
-			movdqa [rdi], xmm0
+			movq [rdi], xmm0
 
 			inc j
 			cmp j, r10
@@ -238,6 +240,7 @@ aplicarFiltroldr:
 	movq xmm5, rdi				; xmm7 = 1 1 1 1 0 0 0 0
 	pand xmm7, xmm5				; xmm7 = RFINAL | GFINAL | BFINAL | AFINAL | 0 | 0 | 0 | 0
 	
+
 	movups xmm0, xmm7    
 
 	add rsp, 8
@@ -254,6 +257,7 @@ multiplicar:
 	push rbp
 	mov rbp, rsp
 	push r12
+	sub rbp, 8
 
 	xor rax, rax
 	cmp rsi, 0
@@ -271,11 +275,12 @@ multiplicar:
 	jne .ciclo
 
 	.fin:
+	add rbp, 8
 	pop r12
 	pop rbp
 ret
 ;								rdi       rsi    rdx       rcx
-;pixel* matriz(matriz*, int i, int j, int #filas)
+;pixel* matriz(matriz*, int i, int j, int #columnas)
 matriz:
 	push rbp
 	mov rbp, rsp
