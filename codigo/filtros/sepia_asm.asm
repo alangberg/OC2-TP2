@@ -73,28 +73,48 @@ aplicarSepia:
 	pxor xmm1, xmm1					; pongo todos estos registros en 0
 	pxor xmm7, xmm7
 
-	movdqa xmm0, [r12]			; pongo en xmm0 los 128b de los 4 pixeles - xmm0 = p0 | p1 | p2 | p3
+	movdqu xmm0, [r12]			; pongo en xmm0 los 128b de los 4 pixeles - xmm0 = p0 | p1 | p2 | p3
 
 	movdqu xmm15, xmm0			; xmm15 = p0 | p1 | p2 | p3
 
-	punpcklbw xmm0, xmm7		; xmm0 = 0 | a7 | . . . | 0 | a0
-	punpckhbw xmm15, xmm7		; xmm15 = 0 | a15 | . . . | 0 | a8
+	xor rdi, rdi
+	pxor xmm10, xmm10
+	pxor xmm11, xmm11
+	mov rdi, 0xFF000000FF
+	movq xmm10, rdi
+	pslldq xmm10, 3
+	pand xmm15, xmm10
+	movdqu xmm11, xmm15
 
-	call sepiaEnDosPixeles 	; xmm0 = pix0Final | pix1Final | 0 | 0
-	movups xmm9, xmm0   	  ; xmm9 = pix0Final | pix1Final | 0 | 0      
+	movdqu xmm15, xmm0
+	pslldq xmm10, 8
+	pand xmm15, xmm10
+
+	paddb xmm11, xmm15
+
+	movdqu xmm15, xmm0
+
+	movdqu xmm15, xmm0
+
+	punpcklbw xmm0, xmm7			; xmm0 = 0 | a7 | . . . | 0 | a0
+	punpckhbw xmm15, xmm7			; xmm15 = 0 | a15 | . . . | 0 | a8
+
+	call sepiaEnDosPixeles	 		; xmm0 = pix0Final | pix1Final | 0 | 0
+	movdqu xmm9, xmm0   	  		; xmm9 = pix0Final | pix1Final | 0 | 0      
 
 	pxor xmm0, xmm0
 	pxor xmm1, xmm1					; pongo todos estos registros en 0
 	pxor xmm7, xmm7
 
-	movups xmm0, xmm15				
-	call sepiaEnDosPixeles  ; xmm0 = pix2Final | pix3Final | 0 | 0
+	movdqu xmm0, xmm15
+	call sepiaEnDosPixeles  		; xmm0 = pix2Final | pix3Final | 0 | 0
 	pslldq xmm0, 8					; xmm0 = 0 | 0 | pix2Final | pix3Final
 
 	addpd xmm0, xmm9				; xmm0 = pix0Final | pix1Final | pix2Final | pix3Final
 
-	movdqa [r12], xmm0
+	paddb xmm0, xmm11
 
+	movdqu [r12], xmm0
 
 	add rsp, 8
 	pop r12
@@ -149,10 +169,10 @@ matriz:
 ret
 
 
-sepiaEnDosPixeles:					; asumo que en xmm0 tengo los dos pixeles desenpaquetados
-														; aca arranco la sumatoria de R + G + B. Lo que me importa es el 1er numero en xmm0, ahi va a estar el resultado
+sepiaEnDosPixeles:						; asumo que en xmm0 tengo los dos pixeles desenpaquetados
+										; aca arranco la sumatoria de R + G + B. Lo que me importa es el 1er numero en xmm0, ahi va a estar el resultado
 	movups xmm1, xmm0					; xmm0 = R0 | G0 | B0 | A0 | R1 | G1 | B1 | A1
-														; xmm1 = R0 | G0 | B0 | A0 | R1 | G1 | B1 | A1
+										; xmm1 = R0 | G0 | B0 | A0 | R1 | G1 | B1 | A1
 							    
 	psrldq xmm1, 2						; shifteo xmm1 =  G0 | B0 | A0 | R1 | G1 | B1 | A1 | .
 
@@ -216,6 +236,7 @@ sepiaEnDosPixeles:					; asumo que en xmm0 tengo los dos pixeles desenpaquetados
 
 	packusdw xmm7, xmm2				; doubles -> words
 	packuswb xmm7, xmm2				; words -> bytes
+	
 
 	pxor xmm1, xmm1
 	mov rdi, 0xFFFFFFFFFFFFFFFF		; me guardo los primeros 8 numeros (bytes) el resto esta en 0
