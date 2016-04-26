@@ -224,6 +224,6 @@ sepiaEnDosPixeles:					; asumo que en xmm0 tengo los dos pixeles desenpaquetados
 
 	movups xmm1, xmm7					; xmm1 <- final (pix1)
 	pslldq xmm1, 4
-	paddw xmm0, xmm1					; xmm0 = pix0Final | pix1Final | 0 | 0
+	paddb xmm0, xmm1					; xmm0 = pix0Final | pix1Final | 0 | 0
 
 ret
