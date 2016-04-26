@@ -98,7 +98,7 @@ ldr_asm:
 	pop rbp
 ret
 
-
+;						rdi		 rsi 			rdx
 ;aplicarFiltroldr(src_rgba_t*, src_row_size, ALPHA)
 aplicarFiltroldr:
 	push rbp

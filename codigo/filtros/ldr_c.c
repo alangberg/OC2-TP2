@@ -41,10 +41,6 @@ void ldr_c    (
                  }
             }
 
-            if (i == 2 && j == 2) printf("%f\n", sumaRGB);
-            
-
-
             float ldrB = src_matrix[i][j*4 + 0] + alpha * sumaRGB * src_matrix[i][j*4 + 0] / max;
             float ldrG = src_matrix[i][j*4 + 1] + alpha * sumaRGB * src_matrix[i][j*4 + 1] / max;
             float ldrR = src_matrix[i][j*4 + 2] + alpha * sumaRGB * src_matrix[i][j*4 + 2] / max;
