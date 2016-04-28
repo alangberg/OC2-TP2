@@ -99,33 +99,6 @@ copiarPixeles:
 	pop rbp
 ret
 
-; void multiplicar(int a, int b)
-multiplicar:
-	push rbp
-	mov rbp, rsp
-	push r12
-	sub rsp, 8
-
-	xor rax, rax
-	cmp rsi, 0
-	je .fin
-
-	cmp rdi, 0
-	je .fin
-
-	xor r12, r12
-
-	.ciclo:
-		add rax, rdi		
-		inc r12
-		cmp r12, rsi
-	jne .ciclo
-
-	.fin:
-	add rsp, 8
-	pop r12
-	pop rbp
-ret
 
 ;pixel* matriz(matriz*, int i, int j, int #columnas)
 matriz:
@@ -136,9 +109,10 @@ matriz:
 
 	mov r12, rdi
 	mov rdi, rcx
-
-	call multiplicar
-
+	
+	mov rax, rdi
+	imul rax, rsi
+	
 	add rax, rdx
 
 	lea rax, [r12 + rax*4]
