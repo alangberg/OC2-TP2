@@ -6,10 +6,10 @@
 
 
 # def lineal(m,x1,x2,b):
-# 	for i in range(x1,x2):
-# 		y=m*i+b
+#   for i in range(x1,x2):
+#       y=m*i+b
 
-# 	return y
+#   return y
 # a = np.arange(0.0, 5.0, 0.01)
 # b = lineal(1,0,5,0)
 # plt.plot(t, s)
@@ -40,7 +40,7 @@
    # plt.show()
    # plt.plot(w, z)
 # for i in range(1,10):
-#    	hola.plot(i,i,'go')
+#       hola.plot(i,i,'go')
 # plt.xlabel('Las X amigo')
 # plt.ylabel('Las Y amigo')
 # plt.title('Grafican2')
