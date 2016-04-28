@@ -38,11 +38,11 @@ int main( int argc, char** argv ) {
 	// Imprimo info
 	if (!config.nombre)
 	{
-		printf ( "Procesando...\n");
+/*		printf ( "Procesando...\n");
 		printf ( "  Filtro             : %s\n", config.nombre_filtro);
 		printf ( "  Implementación     : %s\n", C_ASM( (&config) ) );
 		printf ( "  Archivo de entrada : %s\n", config.archivo_entrada);
-	}
+*/	}
 
 	filtro_t *filtro = detectar_filtro(&config);
 
@@ -70,14 +70,14 @@ filtro_t* detectar_filtro(configuracion_t *config)
 void imprimir_tiempos_ejecucion(unsigned long long int start, unsigned long long int end, int cant_iteraciones) {
 	unsigned long long int cant_ciclos = end-start;
 
-	printf("Tiempo de ejecución:\n");
+/*	printf("Tiempo de ejecución:\n");
 	printf("  Comienzo                          : %llu\n", start);
 	printf("  Fin                               : %llu\n", end);
 	printf("  # iteraciones                     : %d\n", cant_iteraciones);
-	printf("  # de ciclos insumidos totales     : %llu\n", cant_ciclos);
-	printf("  # de ciclos insumidos por llamada : %.3f\n", (float)cant_ciclos/(float)cant_iteraciones);
+	printf("  # de ciclos insumidos totales     : %llu\n", cant_ciclos);*/
+	printf("%.3f\n", (float)cant_ciclos/(float)cant_iteraciones);
 }
-
+//# de ciclos insumidos por llamada  : 
 void correr_filtro_imagen(configuracion_t *config, aplicador_fn_t aplicador)
 {
 	snprintf(config->archivo_salida, sizeof  (config->archivo_salida), "%s/%s.%s.%s%s.bmp",
