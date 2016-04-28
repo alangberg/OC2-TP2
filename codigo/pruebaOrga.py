@@ -85,9 +85,9 @@ arr = np.genfromtxt("SEPIA_C")
 x = [row[0] for row in arr]
 y = [row[1] for row in arr]
 
-# arro3 = np.genfromtxt("sepiaCO3")
-# d = [row[0] for row in arro3]
-# e = [row[1] for row in arro3]
+arro3 = np.genfromtxt("SEPIA_C_O3")
+d = [row[0] for row in arro3]
+e = [row[1] for row in arro3]
 
 
 arrr = np.genfromtxt("SEPIA_ASM")
@@ -105,7 +105,7 @@ fig.patch.set_facecolor('white')
 ax1 = fig.add_subplot(111)
 pylab.plot(x,y,'b', label= 'C')
 pylab.plot(w,z,c='g', label = 'ASM - SIMD')
-#pylab.plot(d,e,c='r', label= 'Co3')
+pylab.plot(d,e,c='r', label= 'C - O3')
 
 #pylab.plot((a),(b), c='r', label ='f(X)=1024x')
 # plt.errorbar(w, z, np.std(desvio))
