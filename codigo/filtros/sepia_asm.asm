@@ -7,66 +7,7 @@ section .text
 global sepia_asm
 
 
- %define i r12
- %define j r13
- %define SRC rdi
- %define DST rsi
- %define COLS rdx
- %define FILAS rcx
-
-sepia_asm:
-	push rbp
-	mov rbp, rsp
-	push r12
-	push r13
-	push r14
-	push r15
-	push rbx
-	sub rsp, 8
-
-	xor i, i	; r12 = i = 0
-
-
-	mov r14, COLS
-	mov rbx, FILAS
-	mov r15, DST
-
-	.ciclo_filas:
-		xor j, j	; r13 = j = 0
-		.ciclo_columnas:
-			mov rdi, r15
-			mov rsi, i
-			mov rdx, j
-			mov rcx, r14
-
-			call matriz
-			mov rdi, rax
-
-			call aplicarSepia
-
-			add j, 4
-			cmp j, r14
-		jne .ciclo_columnas
-
-		inc i
-		cmp i, rbx
-	jne .ciclo_filas
-
-	add rsp, 8
-	pop rbx
-	pop r15
-	pop r14
-	pop r13
-	pop r12
-	pop rbp
-ret
-
-aplicarSepia:
-	push rbp
-	mov rbp, rsp
-	push r12
-	sub rsp, 8
-
+%macro aplicarSepia 0
 	mov r12, rdi
 
 	pxor xmm0, xmm0
@@ -94,12 +35,10 @@ aplicarSepia:
 
 	movdqu xmm15, xmm0
 
-	movdqu xmm15, xmm0
-
 	punpcklbw xmm0, xmm7			; xmm0 = 0 | a7 | . . . | 0 | a0
 	punpckhbw xmm15, xmm7			; xmm15 = 0 | a15 | . . . | 0 | a8
 
-	call sepiaEnDosPixeles	 		; xmm0 = pix0Final | pix1Final | 0 | 0
+	sepiaEnDosPixeles	 		; xmm0 = pix0Final | pix1Final | 0 | 0
 	movdqu xmm9, xmm0   	  		; xmm9 = pix0Final | pix1Final | 0 | 0      
 
 	pxor xmm0, xmm0
@@ -107,7 +46,7 @@ aplicarSepia:
 	pxor xmm7, xmm7
 
 	movdqu xmm0, xmm15
-	call sepiaEnDosPixeles  		; xmm0 = pix2Final | pix3Final | 0 | 0
+	sepiaEnDosPixeles  		; xmm0 = pix2Final | pix3Final | 0 | 0
 	pslldq xmm0, 8					; xmm0 = 0 | 0 | pix2Final | pix3Final
 
 	addpd xmm0, xmm9				; xmm0 = pix0Final | pix1Final | pix2Final | pix3Final
@@ -115,36 +54,9 @@ aplicarSepia:
 	paddb xmm0, xmm11
 
 	movdqu [r12], xmm0
+%endmacro
 
-	add rsp, 8
-	pop r12
-	pop rbp
-ret
-
-;pixel* matriz(matriz*, int i, int j, int #columnas)
-matriz:
-	push rbp
-	mov rbp, rsp
-	push r12
-	sub rsp, 8
-
-	mov r12, rdi
-	mov rdi, rcx
-	
-	mov rax, rdi
-	imul rax, rsi
-	
-	add rax, rdx
-
-	lea rax, [r12 + rax*4]
-
-	add rsp, 8
-	pop r12
-	pop rbp
-ret
-
-
-sepiaEnDosPixeles:						; asumo que en xmm0 tengo los dos pixeles desenpaquetados
+%macro sepiaEnDosPixeles 0						; asumo que en xmm0 tengo los dos pixeles desenpaquetados
 										; aca arranco la sumatoria de R + G + B. Lo que me importa es el 1er numero en xmm0, ahi va a estar el resultado
 	movups xmm1, xmm0					; xmm0 = R0 | G0 | B0 | A0 | R1 | G1 | B1 | A1
 										; xmm1 = R0 | G0 | B0 | A0 | R1 | G1 | B1 | A1
@@ -171,7 +83,7 @@ sepiaEnDosPixeles:						; asumo que en xmm0 tengo los dos pixeles desenpaquetado
 	paddw xmm0, xmm1					; xmm0 = SUMA0 | SUMA0 | SUMA0 | 0 | SUMA1 | SUMA1 | SUMA1 | 0
 
 	pxor xmm7, xmm7
-	movupd xmm7, [val050302]	; xmm7 = 0.2 | 0.3 | 0.5 | 1
+	movdqu xmm7, xmm4	; xmm7 = 0.2 | 0.3 | 0.5 | 1
 	pxor xmm1, xmm1						
 
 	movups xmm3, xmm0					; xmm3 = SUMA0 | SUMA0 | SUMA0 | 0 | SUMA1 | SUMA1 | SUMA1 | 0 |
@@ -198,7 +110,7 @@ sepiaEnDosPixeles:						; asumo que en xmm0 tengo los dos pixeles desenpaquetado
 
 	pxor xmm1, xmm1
 	pxor xmm7, xmm7
-	movupd xmm7, [val050302]  ; xmm7 = 0.2 | 0.3 | 0.5 
+	movdqu xmm7, xmm4  ; xmm7 = 0.2 | 0.3 | 0.5 
 
 	punpcklwd xmm3, xmm1			; xmm3 = SUMA1 | SUMA1 | SUMA1 | .
 	pxor xmm2, xmm2
@@ -221,5 +133,60 @@ sepiaEnDosPixeles:						; asumo que en xmm0 tengo los dos pixeles desenpaquetado
 	movups xmm1, xmm7					; xmm1 <- final (pix1)
 	pslldq xmm1, 4
 	paddb xmm0, xmm1					; xmm0 = pix0Final | pix1Final | 0 | 0
+%endmacro
 
+ %define SRC rdi
+ %define DST rsi
+ %define COLS rdx
+ %define FILAS rcx
+
+sepia_asm:
+	push rbp
+	mov rbp, rsp
+	push r12
+	push r13
+	push r14
+	push r15
+	push rbx
+	sub rsp, 8
+
+	mov r14, DST
+	
+	movupd xmm4, [val050302]
+
+	mov rsi, 512
+ 	mov rcx, 512
+ 	imul rcx, rsi
+
+ 	xor r13, r13
+ 	mov rbx, r14
+
+	.ciclo:
+		mov rdi, rbx
+
+		aplicarSepia
+
+		add rbx, 4*4
+		add r13, 4
+
+	 	cmp r13, 512
+	 	jne .fin
+
+		 	add r14, 512*4
+		 	mov rbx, r14
+		 	xor r13, r13
+		
+	.fin:
+	sub rcx, 4
+	cmp rcx, 0
+	jne .ciclo
+
+
+	add rsp, 8
+	pop rbx
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop rbp
 ret

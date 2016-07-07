@@ -15,98 +15,12 @@ global ldr_asm
  %define FILAS rcx
  %define ALPHA [rbp+16]
 
-section .data
-
-section .text
-;void ldr_asm    (
-	;unsigned char *src,
-	;unsigned char *dst,
-	;int filas,
-	;int cols,
-	;int src_row_size,
-	;int dst_row_size,
-	;int alpha) rbp +16
-
-ldr_asm:
-	push rbp
-	mov rbp, rsp
-	push r12
-	push r13
-	push r14
-	push r15
-	push rbx
-	sub rsp, 8
-
-	
-	mov r14, SRC
-	mov r15, DST
-	mov rbx, r8
-
-	mov r10, COLS
-	mov r11, FILAS
-
-	xor i, i	; r12 = i = 0
-	mov i, 2	; i = 2
-	sub r10, 2
-	sub r11, 2
-
-	.ciclo_filas:
-		xor j, j	; r13 = j = 0
-		mov j, 2	; j = 2
-		
-		.ciclo_columnas:
-
-			mov rdi, r14
-			mov rsi, i
-			mov rdx, j
-			add r10, 2
-			mov rcx, r10
-
-			call matriz
-
-			mov rdi, rax
-			mov rsi, rbx
-
-			xor rdx, rdx
-			mov edx, ALPHA
-
-			call aplicarFiltroldr
-
-			mov rdi, r15
-			mov rsi, i
-			mov rdx, j
-			mov rcx, r10
-
-			call matriz
-			mov rdi, rax
-			movd [rdi], xmm0
-			sub r10, 2
-			inc j
-			cmp j, r10
-		jne .ciclo_columnas
-
-		inc i
-		cmp i, r11
-	jne .ciclo_filas
-
-	add rsp, 8
-	pop r12
-	pop r13
-	pop r14
-	pop r15
-	pop rbx
-	pop rbp
-ret
 
 ;						rdi		 rsi 			rdx
 ;aplicarFiltroldr(src_rgba_t*, src_row_size, ALPHA)
-aplicarFiltroldr:
-	push rbp
-	mov rbp, rsp
-	push r12
-	push r13
+%macro aplicarFiltroldr 0
 	push r14
-	sub rsp, 8
+	push r8
 
 	xor r14, r14
 	mov r14d, edx
@@ -121,7 +35,7 @@ aplicarFiltroldr:
 	pxor xmm14, xmm14
 	pxor xmm0, xmm0
 
-	.ciclo:
+	.ciclo1:
 		movdqu xmm0, [r12]				; pongo en xmm0 los 128b de los 4 pixeles - xmm0 = p[i-2,j-2] | p[i-2,j-1] | p[i-2,j] | p[i-2,j+1] 
 
 		pxor xmm7, xmm7
@@ -130,18 +44,18 @@ aplicarFiltroldr:
 		punpcklbw xmm0, xmm7			; xmm0 = 0 | a7 | . . . | 0 | a0
 		punpckhbw xmm15, xmm7			; xmm15 = 0 | a15 | . . . | 0 | a8
 
-		call sumarPixeles
+		sumarPixeles
 		paddd xmm14, xmm0					; xmm14 = R0+G0+B0 + R1+G1+B1 | 0 | 0 | 0 
 
 		movups xmm0, xmm15
-		call sumarPixeles					; xmm0 = R2+G2+B2 + R3+G3+B3 | 0 | 0 | 0 
+		sumarPixeles					; xmm0 = R2+G2+B2 + R3+G3+B3 | 0 | 0 | 0 
 		paddd xmm14, xmm0					; xmm14 = sumaP0 + .. + sumaP3  | 0 | 0 | 0 
 
 		add r12, rsi
 
 		inc r8
 		cmp r8, 5
-	jne .ciclo
+	jne .ciclo1
 
 	xor r8, r8
 
@@ -154,7 +68,7 @@ aplicarFiltroldr:
 
 		pxor xmm7, xmm7
 		punpcklbw xmm0, xmm7			; xmm0 = 0 | a7 | . . . | 0 | a0
-		call sumarPixel
+		sumarPixel
 		paddd xmm14, xmm0					; xmm14 = SUMAVECINOS  | 0 | 0 | 0
 
 		add r12, rsi
@@ -233,40 +147,14 @@ aplicarFiltroldr:
 	movq xmm5, rdi				; xmm7 = 1 1 1 1 0 0 0 0
 	pand xmm7, xmm5				; xmm7 = RFINAL | GFINAL | BFINAL | AFINAL | 0 | 0 | 0 | 0
 	
-	movups xmm0, xmm7    
+	movups xmm0, xmm7
 
-	add rsp, 8
-	pop r14
-	pop r13
-	pop r12
-	pop rbp
-ret
-
-;								rdi       rsi    rdx       rcx
-;pixel* matriz(matriz*, int i, int j, int #columnas)
-matriz:
-	push rbp
-	mov rbp, rsp
-	push r12
-	sub rsp, 8
-
-	mov r12, rdi
-	mov rdi, rcx
-	
-	mov rax, rdi
-	imul rax, rsi
-	
-	add rax, rdx
-
-	lea rax, [r12 + rax*4]
-
-	add rsp, 8
-	pop r12
-	pop rbp
-ret
+	pop r8
+	pop r14    
+%endmacro
 
 ; Asumo que tengo los dos pixeles en xmm0 con los valores en word, lo que voy a hacer es R1+G2+B1 + R2+G2+B2 
-sumarPixeles:
+%macro sumarPixeles 0
 
 	movups xmm1, xmm0					; xmm0 = R0 | G0 | B0 | A0 | R1 | G1 | B1 | A1
 								   					; xmm1 = R0 | G0 | B0 | A0 | R1 | G1 | B1 | A1
@@ -299,9 +187,9 @@ sumarPixeles:
 	mov rdi, 0xFFFF 					; mascara para setear todo en 0 menos las sumas. 
 	movq xmm7, rdi						; xmm7 = 1 0 0 0 0 0 0 0
 	pand xmm0, xmm7						; xmm0 = R0+G0+B0 + R1+G1+B1 | 0 | 0 | 0 |
-ret
+%endmacro
 
-sumarPixel:
+%macro sumarPixel 0
 		movups xmm1, xmm0				; xmm1 = R0 | G0 | B0 | A0 | . | . | . | .
 		psrldq xmm1, 2					; shifteo xmm1 =  G0 | B0 | A0 | . | . | . | . | .
 		paddw xmm0, xmm1				; xmm0 = R0+G0 | . | . | . | . | . | . | .
@@ -312,6 +200,120 @@ sumarPixel:
 		mov rdi, 0xFFFF 				; mascara para setear todo en 0 menos las sumas. 
 		movq xmm7, rdi					; xmm7 = 1 0 0 0 0 0 0 0
 		pand xmm0, xmm7					; xmm0 = R0+G0+B0 | 0 | 0 | 0 | 0 | 0 | 0 | 0
+%endmacro
+
+;void ldr_asm    (
+	;unsigned char *src,
+	;unsigned char *dst,
+	;int filas,
+	;int cols,
+	;int src_row_size,
+	;int dst_row_size,
+	;int alpha) rbp +16
+
+ldr_asm:
+	push rbp
+	mov rbp, rsp
+	push r12
+	push r13
+	push r14
+	push r15
+	push rbx
+	sub rsp, 8
+
+	
+	mov r14, SRC
+	mov r15, DST
+	
+	add r14, 1026*4
+	add r15, 1026*4
+
+	mov rbx, r14
+	
+	mov rsi, 508
+ 	mov rcx, 508
+ 	imul rcx, rsi
+
+ 	xor r11, r11
+
+	.ciclo:
+
+		xor rdx, rdx
+		mov edx, ALPHA
+
+		mov rdi, rbx
+		mov rsi, r8
+		
+		aplicarFiltroldr
+
+		movd [r15], xmm0
+
+		add rbx, 4
+		add r15, 4
+
+		add r11, 1
+	 	cmp r11, 508
+
+	 	jne .fin
+		 	add r15, 16
+		 	add rbx, 16
+		 	xor r11, r11
+
+ 	.fin:
+	sub rcx, 1
+	cmp rcx, 0
+	jne .ciclo
+
+
+
+
+	; .ciclo_filas:
+	; 	xor j, j	; r13 = j = 0
+	; 	mov j, 2	; j = 2
+		
+	; 	.ciclo_columnas:
+
+	; 		mov rdi, r14
+	; 		mov rsi, i
+	; 		mov rdx, j
+	; 		add r10, 2
+	; 		mov rcx, r10
+
+	; 		call matriz
+
+	; 		mov rdi, rax
+	; 		mov rsi, rbx
+
+	; 		xor rdx, rdx
+	; 		mov edx, ALPHA
+
+	; 		call aplicarFiltroldr
+
+	; 		mov rdi, r15
+	; 		mov rsi, i
+	; 		mov rdx, j
+	; 		mov rcx, r10
+
+	; 		call matriz
+	; 		mov rdi, rax
+	; 		movd [rdi], xmm0
+	; 		sub r10, 2
+	; 		inc j
+	; 		cmp j, r10
+	; 	jne .ciclo_columnas
+
+	; 	inc i
+	; 	cmp i, r11
+	; jne .ciclo_filas
+
+	add rsp, 8
+	pop r12
+	pop r13
+	pop r14
+	pop r15
+	pop rbx
+	pop rbp
 ret
+
 
 
