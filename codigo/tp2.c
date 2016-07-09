@@ -70,13 +70,15 @@ filtro_t* detectar_filtro(configuracion_t *config)
 void imprimir_tiempos_ejecucion(unsigned long long int start, unsigned long long int end, int cant_iteraciones) {
 	unsigned long long int cant_ciclos = end-start;
 
-/*	printf("Tiempo de ejecución:\n");
-	printf("  Comienzo                          : %llu\n", start);
-	printf("  Fin                               : %llu\n", end);
-	printf("  # iteraciones                     : %d\n", cant_iteraciones);
-	printf("  # de ciclos insumidos totales     : %llu\n", cant_ciclos);*/
-	printf("%.3f\n", (float)cant_ciclos/(float)cant_iteraciones);
+	// printf("Tiempo de ejecución:\n");
+	// printf("  Comienzo                          : %llu\n", start);
+	// printf("  Fin                               : %llu\n", end);
+	// printf("  # iteraciones                     : %d\n", cant_iteraciones);
+	// printf("  # de ciclos insumidos totales     : %llu\n", cant_ciclos);
+	// printf("%.3f\n", (float)cant_ciclos/(float)cant_iteraciones);
+	printf("%.3f\n", (float)cant_ciclos);
 }
+
 //# de ciclos insumidos por llamada  : 
 void correr_filtro_imagen(configuracion_t *config, aplicador_fn_t aplicador)
 {
@@ -92,13 +94,14 @@ void correr_filtro_imagen(configuracion_t *config, aplicador_fn_t aplicador)
 	{
 		imagenes_abrir(config);
 		unsigned long long start, end;
-		MEDIR_TIEMPO_START(start)
 		for (int i = 0; i < config->cant_iteraciones; i++) {
-				aplicador(config);
+			MEDIR_TIEMPO_START(start)
+			aplicador(config);
+			MEDIR_TIEMPO_STOP(end)
+			imprimir_tiempos_ejecucion(start, end, config->cant_iteraciones);
 		}
-		MEDIR_TIEMPO_STOP(end)
+		
 		imagenes_guardar(config);
 		imagenes_liberar(config);
-		imprimir_tiempos_ejecucion(start, end, config->cant_iteraciones);
 	}
 }

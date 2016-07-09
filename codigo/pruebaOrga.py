@@ -84,17 +84,17 @@ import pylab
 arr = np.genfromtxt("SEPIA_C")
 x = [row[0] for row in arr]
 y = [row[1] for row in arr]
+err1 = [row[2] for row in arr]
 
-arro3 = np.genfromtxt("SEPIA_C_O3")
-d = [row[0] for row in arro3]
-e = [row[1] for row in arro3]
-
+# arro3 = np.genfromtxt("SEPIA_C_O3")
+# d = [row[0] for row in arro3]
+# e = [row[1] for row in arro3]
 
 arrr = np.genfromtxt("SEPIA_ASM")
 
 w = [row[0] for row in arrr]
 z = [row[1] for row in arrr]
-
+err2 = [row[2] for row in arrr]
 
 # a = np.arange(2048*2048)
 # b = 600*a
@@ -102,18 +102,23 @@ z = [row[1] for row in arrr]
 
 fig = plt.figure()
 fig.patch.set_facecolor('white')
+
+plt.errorbar(x, y, err1)
+plt.errorbar(w, z, err2)
+
+
 ax1 = fig.add_subplot(111)
 pylab.plot(x,y,'b', label= 'C')
 pylab.plot(w,z,c='g', label = 'ASM - SIMD')
-pylab.plot(d,e,c='r', label= 'C - O3')
+# pylab.plot(d,e,c='r', label= 'C - O3')
 
 #pylab.plot((a),(b), c='r', label ='f(X)=1024x')
 # plt.errorbar(w, z, np.std(desvio))
-ax1.set_title("SEPIA")    
+ax1.set_title("SEPIA")
 ax1.set_xlabel('Cantidad de pixeles de la imagen')
 ax1.set_ylabel('Cantidad de ciclos de Clock')
-# ax1.set_yscale('log', basey=2)
-# ax1.set_xscale('log', basex=2)
+ax1.set_yscale('log', basey=2)
+ax1.set_xscale('log', basex=2)
 
 
 #ax1.plot(np.log2(x),np.log2(y), c='r', label='EL CHACHO ARRIBAS')

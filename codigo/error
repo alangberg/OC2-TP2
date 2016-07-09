@@ -1,0 +1,10 @@
+file = sys.argv.pop(0)
+
+arr = np.genfromtxt(file)
+x = 0
+for row in arr:
+	x += row
+	pass
+
+x = x / 100
+print "Promedio: " + x

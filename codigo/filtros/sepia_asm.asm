@@ -8,14 +8,13 @@ global sepia_asm
 
 
 %macro aplicarSepia 0
-	mov r12, rdi
+	mov r12, rsi
 
 	pxor xmm0, xmm0
 	pxor xmm1, xmm1					; pongo todos estos registros en 0
 	pxor xmm7, xmm7
 
 	movdqu xmm0, [r12]			; pongo en xmm0 los 128b de los 4 pixeles - xmm0 = p0 | p1 | p2 | p3
-
 	movdqu xmm15, xmm0			; xmm15 = p0 | p1 | p2 | p3
 
 	xor rdi, rdi
@@ -53,7 +52,7 @@ global sepia_asm
 
 	paddb xmm0, xmm11
 
-	movdqu [r12], xmm0
+	movdqu [rsi], xmm0
 %endmacro
 
 %macro sepiaEnDosPixeles 0						; asumo que en xmm0 tengo los dos pixeles desenpaquetados
@@ -73,11 +72,11 @@ global sepia_asm
 	movq xmm7, rdi						; xmm7 = 1 0 0 0 0 0 0 0
 	movups xmm8, xmm7					; xmm8 = 1 0 0 0 0 0 0 0
 	pslldq xmm7, 8						; xmm7 = 0 0 0 0 1 0 0 0
-	addps xmm7, xmm8					; xmm7 = 1 0 0 0 1 0 0 0							
+	addps xmm7, xmm8					; xmm7 = 1 0 0 0 1 0 0 0
 	pand xmm0, xmm7						; xmm0 = R0+G0+B0 | 0 | 0 | 0 | R1+G1+B1 | 0 | 0 | 0
 	movups xmm1, xmm0					; xmm1 = R0+G0+B0 | 0 | 0 | 0 | R1+G1+B1 | 0 | 0 | 0
 
-	pslldq xmm0, 2				
+	pslldq xmm0, 2
 	paddw xmm0, xmm1
 	pslldq xmm0, 2
 	paddw xmm0, xmm1					; xmm0 = SUMA0 | SUMA0 | SUMA0 | 0 | SUMA1 | SUMA1 | SUMA1 | 0
@@ -91,7 +90,7 @@ global sepia_asm
 
 	punpcklwd xmm0, xmm1			; xmm0 = SUMA0 | SUMA0 | SUMA0 | .	
 	pxor xmm2, xmm2						
-	
+
 	CVTDQ2PS xmm2, xmm0				; xmm2 = SUMA0 | SUMA0 | SUMA0 | . donde SUMA0 es FLOAT.
 	mulps xmm2, xmm7					; xmm2 = SUMA0*0.2 | SUMA0*0.3 | SUMA0*0.5 | .
 
@@ -154,9 +153,7 @@ sepia_asm:
 	
 	movupd xmm4, [val050302]
 
-	mov rsi, 512
- 	mov rcx, 512
- 	imul rcx, rsi
+	mov r8, rcx
 
  	xor r13, r13
  	mov rbx, r14
@@ -167,17 +164,19 @@ sepia_asm:
 		aplicarSepia
 
 		add rbx, 4*4
+		add rsi, 4*4
 		add r13, 4
 
-	 	cmp r13, 512
+	 	cmp r13, r8
 	 	jne .fin
 
-		 	add r14, 512*4
+		 	add r14, r9
+
 		 	mov rbx, r14
 		 	xor r13, r13
-		
+			dec rcx
+
 	.fin:
-	sub rcx, 4
 	cmp rcx, 0
 	jne .ciclo
 
@@ -190,3 +189,6 @@ sepia_asm:
 	pop r12
 	pop rbp
 ret
+
+
+
