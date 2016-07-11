@@ -81,21 +81,31 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pylab
 
-arr = np.genfromtxt("LDR_C")
-x = [row[0] for row in arr]
-y = [row[1] for row in arr]
+arr = np.genfromtxt("SEPIA_C_O0")
+c0_x = [row[0] for row in arr]
+c0_y = [row[1] for row in arr]
+err0 = [row[2] for row in arr]
+
+arr = np.genfromtxt("SEPIA_C_O1")
+c1_x = [row[0] for row in arr]
+c1_y = [row[1] for row in arr]
 err1 = [row[2] for row in arr]
 
-arro3 = np.genfromtxt("LDR_C_O3")
-d = [row[0] for row in arro3]
-e = [row[1] for row in arro3]
+arr = np.genfromtxt("SEPIA_C_O2")
+c2_x = [row[0] for row in arr]
+c2_y = [row[1] for row in arr]
+err2 = [row[2] for row in arr]
+
+
+arro3 = np.genfromtxt("SEPIA_C_O3")
+c3_x = [row[0] for row in arro3]
+c3_y = [row[1] for row in arro3]
 err3 = [row[2] for row in arro3]
 
-arrr = np.genfromtxt("LDR_ASM")
-
-w = [row[0] for row in arrr]
-z = [row[1] for row in arrr]
-err2 = [row[2] for row in arrr]
+arrr = np.genfromtxt("SEPIA_ASM")
+asm_x = [row[0] for row in arrr]
+asm_y = [row[1] for row in arrr]
+errASM = [row[2] for row in arrr]
 
 # a = np.arange(2048*2048)
 # b = 600*a
@@ -104,19 +114,23 @@ err2 = [row[2] for row in arrr]
 fig = plt.figure()
 fig.patch.set_facecolor('white')
 
-plt.errorbar(x, y, err1)
-plt.errorbar(w, z, err2)
-plt.errorbar(d, e, err3)
+plt.errorbar(c0_x, c0_y, err0)
+plt.errorbar(c3_x, c3_y, err1)
+plt.errorbar(c3_x, c3_y, err2)
+plt.errorbar(c3_x, c3_y, err3)
+plt.errorbar(asm_x, asm_y, errASM)
 
 
 ax1 = fig.add_subplot(111)
-pylab.plot(x,y,'b', label= 'C')
-pylab.plot(w,z,c='g', label = 'ASM - SIMD')
-pylab.plot(d,e,c='r', label= 'C - O3')
+pylab.plot(c0_x,c0_y,c='r', label= 'C - O0')
+pylab.plot(c0_x,c1_y,c='g', label= 'C - O1')
+pylab.plot(c0_x,c2_y,c='b', label= 'C - O2')
+pylab.plot(c3_x,c3_y,c='c', label= 'C - O3')
+pylab.plot(asm_x,asm_y,c='m', label = 'ASM - SIMD')
 
-#pylab.plot((a),(b), c='r', label ='f(X)=1024x')
+# pylab.plot((a),(b), c='r', label ='f(X)=1024x')
 # plt.errorbar(w, z, np.std(desvio))
-ax1.set_title("LDR")
+ax1.set_title("SEPIA")
 ax1.set_xlabel('Cantidad de pixeles de la imagen')
 ax1.set_ylabel('Cantidad de ciclos de Clock')
 ax1.set_yscale('log', basey=2)
