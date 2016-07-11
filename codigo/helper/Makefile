@@ -5,7 +5,8 @@
 #                                                                           #
 # ************************************************************************* #
 
-CFLAGS=-Wall -Wextra -pedantic -O0 -ggdb -std=c99
+# CFLAGS=-Wall -Wextra -pedantic -O0 -ggdb -std=c99
+CFLAGS=-Wall -Wextra -pedantic -O2 -ggdb -std=c99
 
 BUILD_DIR = ../build
 BIN = tp2

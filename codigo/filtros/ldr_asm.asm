@@ -243,7 +243,7 @@ ldr_asm:
 		xor rdx, rdx
 		mov edx, ALPHA
 
-		mov rdi, rbxs
+		mov rdi, rbx
 		mov rsi, r10
 		
 		aplicarFiltroldr

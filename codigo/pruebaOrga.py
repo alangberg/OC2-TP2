@@ -81,16 +81,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pylab
 
-arr = np.genfromtxt("SEPIA_C")
+arr = np.genfromtxt("LDR_C")
 x = [row[0] for row in arr]
 y = [row[1] for row in arr]
 err1 = [row[2] for row in arr]
 
-# arro3 = np.genfromtxt("SEPIA_C_O3")
-# d = [row[0] for row in arro3]
-# e = [row[1] for row in arro3]
+arro3 = np.genfromtxt("LDR_C_O3")
+d = [row[0] for row in arro3]
+e = [row[1] for row in arro3]
+err3 = [row[2] for row in arro3]
 
-arrr = np.genfromtxt("SEPIA_ASM")
+arrr = np.genfromtxt("LDR_ASM")
 
 w = [row[0] for row in arrr]
 z = [row[1] for row in arrr]
@@ -105,16 +106,17 @@ fig.patch.set_facecolor('white')
 
 plt.errorbar(x, y, err1)
 plt.errorbar(w, z, err2)
+plt.errorbar(d, e, err3)
 
 
 ax1 = fig.add_subplot(111)
 pylab.plot(x,y,'b', label= 'C')
 pylab.plot(w,z,c='g', label = 'ASM - SIMD')
-# pylab.plot(d,e,c='r', label= 'C - O3')
+pylab.plot(d,e,c='r', label= 'C - O3')
 
 #pylab.plot((a),(b), c='r', label ='f(X)=1024x')
 # plt.errorbar(w, z, np.std(desvio))
-ax1.set_title("SEPIA")
+ax1.set_title("LDR")
 ax1.set_xlabel('Cantidad de pixeles de la imagen')
 ax1.set_ylabel('Cantidad de ciclos de Clock')
 ax1.set_yscale('log', basey=2)

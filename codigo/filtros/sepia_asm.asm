@@ -28,7 +28,7 @@ global sepia_asm
 
 	movdqu xmm15, xmm0
 	pslldq xmm10, 8
-	pand xmm15, xmm10
+	pand xmm15, xmm0
 
 	paddb xmm11, xmm15
 
