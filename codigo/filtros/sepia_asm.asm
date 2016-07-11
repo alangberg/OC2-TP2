@@ -28,7 +28,7 @@ global sepia_asm
 
 	movdqu xmm15, xmm0
 	pslldq xmm10, 8
-	pand xmm15, xmm0
+	pand xmm15, xmm10
 
 	paddb xmm11, xmm15
 
@@ -150,7 +150,7 @@ sepia_asm:
 	sub rsp, 8
 
 	mov r14, DST
-	
+
 	movupd xmm4, [val050302]
 
 	mov r8, rcx
@@ -189,6 +189,3 @@ sepia_asm:
 	pop r12
 	pop rbp
 ret
-
-
-
