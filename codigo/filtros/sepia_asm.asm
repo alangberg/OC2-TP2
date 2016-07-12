@@ -82,7 +82,7 @@ global sepia_asm
 	paddw xmm0, xmm1					; xmm0 = SUMA0 | SUMA0 | SUMA0 | 0 | SUMA1 | SUMA1 | SUMA1 | 0
 
 	pxor xmm7, xmm7
-	movdqu xmm7, xmm4	; xmm7 = 0.2 | 0.3 | 0.5 | 1
+	movdqu xmm7, xmm4					; xmm7 = 0.2 | 0.3 | 0.5 | 1
 	pxor xmm1, xmm1						
 
 	movups xmm3, xmm0					; xmm3 = SUMA0 | SUMA0 | SUMA0 | 0 | SUMA1 | SUMA1 | SUMA1 | 0 |

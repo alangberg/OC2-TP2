@@ -81,28 +81,28 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pylab
 
-arr = np.genfromtxt("SEPIA_C_O0")
+arr = np.genfromtxt("LDR_C_O0")
 c0_x = [row[0] for row in arr]
 c0_y = [row[1] for row in arr]
 err0 = [row[2] for row in arr]
 
-arr = np.genfromtxt("SEPIA_C_O1")
+arr = np.genfromtxt("LDR_ASM_VIEJO")
 c1_x = [row[0] for row in arr]
 c1_y = [row[1] for row in arr]
 err1 = [row[2] for row in arr]
 
-arr = np.genfromtxt("SEPIA_C_O2")
-c2_x = [row[0] for row in arr]
-c2_y = [row[1] for row in arr]
-err2 = [row[2] for row in arr]
+# arr = np.genfromtxt("LDR_C_O2")
+# c2_x = [row[0] for row in arr]
+# c2_y = [row[1] for row in arr]
+# err2 = [row[2] for row in arr]
 
 
-arro3 = np.genfromtxt("SEPIA_C_O3")
-c3_x = [row[0] for row in arro3]
-c3_y = [row[1] for row in arro3]
-err3 = [row[2] for row in arro3]
+# arro3 = np.genfromtxt("LDR_C_O3")
+# c3_x = [row[0] for row in arro3]
+# c3_y = [row[1] for row in arro3]
+# err3 = [row[2] for row in arro3]
 
-arrr = np.genfromtxt("SEPIA_ASM")
+arrr = np.genfromtxt("LDR_ASM")
 asm_x = [row[0] for row in arrr]
 asm_y = [row[1] for row in arrr]
 errASM = [row[2] for row in arrr]
@@ -114,34 +114,36 @@ errASM = [row[2] for row in arrr]
 fig = plt.figure()
 fig.patch.set_facecolor('white')
 
+# plt.errorbar(c2_x, c2_y, err2)
+plt.errorbar(c1_x, c1_y, err1)
 plt.errorbar(c0_x, c0_y, err0)
-plt.errorbar(c3_x, c3_y, err1)
-plt.errorbar(c3_x, c3_y, err2)
-plt.errorbar(c3_x, c3_y, err3)
+# plt.errorbar(c3_x, c3_y, err3)
 plt.errorbar(asm_x, asm_y, errASM)
 
 
 ax1 = fig.add_subplot(111)
-pylab.plot(c0_x,c0_y,c='r', label= 'C - O0')
-pylab.plot(c0_x,c1_y,c='g', label= 'C - O1')
-pylab.plot(c0_x,c2_y,c='b', label= 'C - O2')
-pylab.plot(c3_x,c3_y,c='c', label= 'C - O3')
-pylab.plot(asm_x,asm_y,c='m', label = 'ASM - SIMD')
+pylab.plot(c0_x,c0_y, c='g', label= 'C - O0')
+pylab.plot(c1_x,c1_y, c='b', label= 'ASM - CALLs')
+# pylab.plot(c2_x,c2_y, c='b', label= 'C - O2')
+# pylab.plot(c3_x,c3_y, c='c', label= 'C - O3')
+pylab.plot(asm_x,asm_y, c='m', label = 'ASM - SIN CALLs')
 
 # pylab.plot((a),(b), c='r', label ='f(X)=1024x')
 # plt.errorbar(w, z, np.std(desvio))
-ax1.set_title("SEPIA")
-ax1.set_xlabel('Cantidad de pixeles de la imagen')
-ax1.set_ylabel('Cantidad de ciclos de Clock')
+ax1.set_title("LDR", fontsize=50)
+ax1.set_xlabel('Cantidad de pixeles de la imagen', fontsize=20)
+ax1.set_ylabel('Cantidad de ciclos de Clock', fontsize=20)
 ax1.set_yscale('log', basey=2)
 ax1.set_xscale('log', basex=2)
 
+plt.rcParams.update({'font.size': 22})
 
 #ax1.plot(np.log2(x),np.log2(y), c='r', label='EL CHACHO ARRIBAS')
 # pylab.plot((x),(y), c='r', label='ASM')
 # pylab.plot(w,z, c='b',label='C')
 leg = ax1.legend()
 
-leg = plt.legend( loc = 'upper left')
+leg = plt.legend( loc = 'upper left', fancybox=True, prop={'size':25})
 
+plt.grid(True)
 plt.show()
